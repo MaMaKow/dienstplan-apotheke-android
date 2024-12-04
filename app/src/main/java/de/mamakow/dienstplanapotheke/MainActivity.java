@@ -1,7 +1,8 @@
 package de.mamakow.dienstplanapotheke;
 
-import android.support.v4.app.AppCompatActivity;
+//import android.support.v4.app.AppCompatActivity;
 //import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
