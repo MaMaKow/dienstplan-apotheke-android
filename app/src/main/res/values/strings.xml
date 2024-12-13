@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Dienstplan Apotheke</string>
+    <string name="test_page_url" translatable="false">https://martin-mandelkow.de/development/testing/dienstplan-test/</string>
 </resources>

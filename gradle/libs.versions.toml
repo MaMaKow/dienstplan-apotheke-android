@@ -22,7 +22,7 @@ activity = { group = "androidx.activity", name = "activity", version.ref = "acti
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+dotenv = "io.github.cdimascio:dotenv-java:3.0.0"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
