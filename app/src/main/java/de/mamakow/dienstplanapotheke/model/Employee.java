@@ -71,8 +71,8 @@ public class Employee {
          */
         this.employeeStartOfEmployment = null;
         this.employeeEndOfEmployment = null;
-        this.employeeStartOfEmployment = LocalDate.parse(employeeStartOfEmployment, Wrapper.DATE_TIME_FORMATTER_DAY_MONTH_YEAR);
-        this.employeeEndOfEmployment = LocalDate.parse(employeeEndOfEmployment, Wrapper.DATE_TIME_FORMATTER_DAY_MONTH_YEAR);
+        this.employeeStartOfEmployment = LocalDate.parse(employeeStartOfEmployment, DateTime.DATE_TIME_FORMATTER_DAY_MONTH_YEAR);
+        this.employeeEndOfEmployment = LocalDate.parse(employeeEndOfEmployment, DateTime.DATE_TIME_FORMATTER_DAY_MONTH_YEAR);
     }
 
     public int getEmployeeKey() {

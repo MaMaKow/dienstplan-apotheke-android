@@ -69,8 +69,9 @@ public class NetworkHandler {
                     if (!response.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
                     }
-                    String accessToken = responseBody.string();
-                    Log.i("data", responseBody.string());
+                    String responseBodyString = responseBody.string();
+                    String accessToken = responseBodyString;
+                    Log.i("data", responseBodyString);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
