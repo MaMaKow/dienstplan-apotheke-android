@@ -4,6 +4,8 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import de.mamakow.dienstplanapotheke.session.SessionManager;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -11,7 +13,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        NetworkHandler networkHandler = new NetworkHandler(this);
-        networkHandler.fetchRoster();
+        SessionManager sessionManager = new SessionManager(this);
+        if (sessionManager.isNotLoggedIn()) {
+            sessionManager.performLogin();
+        } else {
+            sessionManager.logout();
+        }
     }
 }
