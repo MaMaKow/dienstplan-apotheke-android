@@ -18,10 +18,6 @@
  */
 package de.mamakow.dienstplanapotheke.model;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import java.time.LocalDate;
 
 public class Employee {
@@ -39,7 +35,6 @@ public class Employee {
     private LocalDate employeeStartOfEmployment;
     private LocalDate employeeEndOfEmployment;
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     // This was inserted to allow the use of LocalDate.parse()
     public Employee(String employeeKey,
                     String employeeLastName,

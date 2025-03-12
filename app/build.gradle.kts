@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "de.mamakow.dienstplanapotheke"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "de.mamakow.dienstplanapotheke"
@@ -41,10 +41,18 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.okhttp)
-    implementation(libs.gson)
+    implementation(libs.room.common)
+    implementation(libs.room.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     //implementation("io.github.cdimascio:dotenv-java:3.0.0")
+
     implementation(libs.dotenv)
+    // Retrofit
+    implementation(libs.retrofit)
+
+    // Gson Converter für Retrofit
+    implementation(libs.converter.gson)
+    annotationProcessor(libs.room.compiler)
 }
