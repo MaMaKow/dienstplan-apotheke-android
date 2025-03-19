@@ -1,101 +1,149 @@
-/*
- * Copyright (C) 2021 Mandelkow
- *
- * Dienstplan Apotheke
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package de.mamakow.dienstplanapotheke.model;
+
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
 import java.time.LocalDate;
 
+@Entity(tableName = "employee_table")
 public class Employee {
+    @PrimaryKey(autoGenerate = true)
+    public int id; // Changed to public
 
-    private final int employeeKey;
-    private final String employeeLastName;
-    private final String employeeFirstName;
-    private final String employeeProfession;
-    private final float employeeWorkingHours;
-    private final int employeeLunchBreakMinutes;
-    private final int employeeHolidays;
-    private final boolean employeeAbilitiesGoodsReceipt;
-    private final boolean employeeAbilitiesCompounding;
+    @ColumnInfo(name = "employee_key")
+    private int employeeKey;
+    @ColumnInfo(name = "employee_last_name")
+    private String employeeLastName;
+    @ColumnInfo(name = "employee_first_name")
+    private String employeeFirstName;
+    @ColumnInfo(name = "employee_profession")
+    private String employeeProfession;
+    @ColumnInfo(name = "employee_working_hours")
+    private float employeeWorkingHours;
+    @ColumnInfo(name = "employee_lunch_break_minutes")
+    private int employeeLunchBreakMinutes;
+    @ColumnInfo(name = "employee_holidays")
+    private int employeeHolidays;
+    @ColumnInfo(name = "employee_abilities_goods_receipt")
+    private boolean employeeAbilitiesGoodsReceipt;
+    @ColumnInfo(name = "employee_abilities_compounding")
+    private boolean employeeAbilitiesCompounding;
+    @ColumnInfo(name = "employee_branch_id")
     private int employeeBranchId;
+    @ColumnInfo(name = "employee_start_of_employment")
     private LocalDate employeeStartOfEmployment;
+    @ColumnInfo(name = "employee_end_of_employment")
     private LocalDate employeeEndOfEmployment;
 
-    // This was inserted to allow the use of LocalDate.parse()
-    public Employee(String employeeKey,
-                    String employeeLastName,
-                    String employeeFirstName,
-                    String employeeProfession,
-                    String employeeWorkingHours,
-                    String employeeLunchBreakMinutes,
-                    String employeeHolidays,
-                    String employeeBranchName,
-                    String employeeAbilitiesGoodsReceipt,
-                    String employeeAbilitiesCompounding,
-                    String employeeStartOfEmployment,
-                    String employeeEndOfEmployment
-    ) {
-        this.employeeKey = Integer.parseInt(employeeKey);
-        this.employeeLastName = employeeLastName;
-        this.employeeFirstName = employeeFirstName;
-        this.employeeProfession = employeeProfession;
-        this.employeeWorkingHours = Float.parseFloat(employeeWorkingHours);
-        this.employeeLunchBreakMinutes = Integer.parseInt(employeeLunchBreakMinutes);
-        this.employeeHolidays = Integer.parseInt(employeeHolidays);
-        NetworkOfBranchOffices networkOfBranchOffices = new NetworkOfBranchOffices();
-        Branch branch = networkOfBranchOffices.getBranchByName(employeeBranchName);
-        this.employeeBranchId = branch.getBranchId();
-        this.employeeAbilitiesGoodsReceipt = Boolean.parseBoolean(employeeAbilitiesGoodsReceipt);
-        this.employeeAbilitiesCompounding = Boolean.parseBoolean(employeeAbilitiesCompounding);
-        /**
-         * Employment:
-         */
-        this.employeeStartOfEmployment = null;
-        this.employeeEndOfEmployment = null;
-        this.employeeStartOfEmployment = LocalDate.parse(employeeStartOfEmployment, DateTime.DATE_TIME_FORMATTER_DAY_MONTH_YEAR);
-        this.employeeEndOfEmployment = LocalDate.parse(employeeEndOfEmployment, DateTime.DATE_TIME_FORMATTER_DAY_MONTH_YEAR);
+    public Employee() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getEmployeeKey() {
         return employeeKey;
     }
 
-    public String getLastName() {
+    public void setEmployeeKey(int employeeKey) {
+        this.employeeKey = employeeKey;
+    }
+
+    public String getEmployeeLastName() {
         return employeeLastName;
     }
 
-    public String getFirstName() {
+    public void setEmployeeLastName(String employeeLastName) {
+        this.employeeLastName = employeeLastName;
+    }
+
+    public String getEmployeeFirstName() {
         return employeeFirstName;
     }
 
-    public String getFullName() {
+    public void setEmployeeFirstName(String employeeFirstName) {
+        this.employeeFirstName = employeeFirstName;
+    }
+
+    public String getEmployeeFullName() {
         return employeeFirstName + " " + employeeLastName;
     }
 
-    public String getProfession() {
+    public String getEmployeeProfession() {
         return employeeProfession;
     }
 
-    public float getWorkingHours() {
+    public void setEmployeeProfession(String employeeProfession) {
+        this.employeeProfession = employeeProfession;
+    }
+
+    public float getEmployeeWorkingHours() {
         return employeeWorkingHours;
     }
 
-    public int getHolidays() {
+    public void setEmployeeWorkingHours(float employeeWorkingHours) {
+        this.employeeWorkingHours = employeeWorkingHours;
+    }
+
+    public int getEmployeeHolidays() {
         return employeeHolidays;
     }
 
+    public void setEmployeeHolidays(int employeeHolidays) {
+        this.employeeHolidays = employeeHolidays;
+    }
+
+    public boolean isEmployeeAbilitiesGoodsReceipt() {
+        return employeeAbilitiesGoodsReceipt;
+    }
+
+    public void setEmployeeAbilitiesGoodsReceipt(boolean employeeAbilitiesGoodsReceipt) {
+        this.employeeAbilitiesGoodsReceipt = employeeAbilitiesGoodsReceipt;
+    }
+
+    public boolean isEmployeeAbilitiesCompounding() {
+        return employeeAbilitiesCompounding;
+    }
+
+    public void setEmployeeAbilitiesCompounding(boolean employeeAbilitiesCompounding) {
+        this.employeeAbilitiesCompounding = employeeAbilitiesCompounding;
+    }
+
+    public int getEmployeeBranchId() {
+        return employeeBranchId;
+    }
+
+    public void setEmployeeBranchId(int employeeBranchId) {
+        this.employeeBranchId = employeeBranchId;
+    }
+
+    public LocalDate getEmployeeStartOfEmployment() {
+        return employeeStartOfEmployment;
+    }
+
+    public void setEmployeeStartOfEmployment(LocalDate employeeStartOfEmployment) {
+        this.employeeStartOfEmployment = employeeStartOfEmployment;
+    }
+
+    public LocalDate getEmployeeEndOfEmployment() {
+        return employeeEndOfEmployment;
+    }
+
+    public void setEmployeeEndOfEmployment(LocalDate employeeEndOfEmployment) {
+        this.employeeEndOfEmployment = employeeEndOfEmployment;
+    }
+
+    public int getEmployeeLunchBreakMinutes() {
+        return employeeLunchBreakMinutes;
+    }
+
+    public void setEmployeeLunchBreakMinutes(int employeeLunchBreakMinutes) {
+        this.employeeLunchBreakMinutes = employeeLunchBreakMinutes;
+    }
 }
