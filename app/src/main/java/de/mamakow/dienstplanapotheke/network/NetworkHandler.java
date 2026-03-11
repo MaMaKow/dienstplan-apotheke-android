@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,7 @@ public class NetworkHandler {
     private final SessionManager sessionManager;
     private final OkHttpClient client;
     private final String restBaseUrl;
+    private final String TAG = this.getClass().getName();
 
     // Constructor to initialize OkHttpClient and SessionManager
     public NetworkHandler(Context context, SessionManager sessionManager) {
@@ -35,11 +37,13 @@ public class NetworkHandler {
 
     // Method to perform a GET request
     public void fetchRoster() {
-        String token = sessionManager.getSessionToken();
         if (sessionManager.isNotLoggedIn()) {
-            Log.e("NetworkHandler", "User not logged in");
+            Log.e(TAG, "User not logged in. Triggering login...");
+            sessionManager.performLogin();
+            return;
         }
 
+        String token = sessionManager.getSessionToken();
 
         // GET to receive roster data
         Request get = new Request.Builder()
@@ -50,26 +54,28 @@ public class NetworkHandler {
         client.newCall(get).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException exception) {
-                Log.getStackTraceString(exception);
+                Log.e(TAG, "Request failed", exception);
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try {
+                    // Handle token expiration
+                    if (response.code() == 401) {
+                        Log.e(TAG, "Token expired (401). Clearing token and triggering re-login.");
+                        sessionManager.logout(); // Löscht den alten Token aus den SharedPreferences
+                        sessionManager.performLogin();
+                        return;
+                    }
+
                     ResponseBody responseBody = response.body();
                     if (!response.isSuccessful()) {
-                        // Handle token expiration
-                        if (response.code() == 401) {
-                            Log.e("NetworkHandler", "Token expired. User needs to log in again.");
-                            // Implement token refresh logic or prompt user to log in again
-                        } else {
-                            throw new IOException("Unexpected code " + response);
-                        }
-                    } else {
+                        throw new IOException("Unexpected code " + response);
+                    } else if (responseBody != null) {
                         Log.i("data", responseBody.string());
                     }
                 } catch (Exception exception) {
-                    Log.getStackTraceString(exception);
+                    Log.e(TAG, "Error in onResponse", exception);
                 }
             }
         });
@@ -101,8 +107,18 @@ public class NetworkHandler {
                     if (!response.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
                     }
-                    String token = responseBody.string();
-                    callback.onSuccess(token);
+                    String responseData = responseBody.string();
+                    // Using new JsonParser().parse() for compatibility with older GSON versions.
+                    // parseString() was introduced in Gson 2.8.6 as a static method.
+                    JsonObject jsonObject = new JsonParser().parse(responseData).getAsJsonObject();
+                    if (jsonObject.has("accessToken")) {
+                        String token = jsonObject.get("accessToken").getAsString();
+                        Log.d(TAG, "Found token in json: " + token);
+                        callback.onSuccess(token);
+                    } else {
+                        Log.d(TAG, jsonObject.toString());
+                        throw new Exception("No token in response");
+                    }
                 } catch (Exception e) {
                     callback.onFailure(e);
                 }

@@ -3,10 +3,9 @@ package de.mamakow.dienstplanapotheke.repository;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,60 +33,55 @@ public class RosterRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
+    /**
+     * Gibt ein LiveData-Objekt zurück, das den Roster für einen Zeitraum darstellt.
+     * Nutzt Transformations.map, um die Liste der RosterItems aus der DB in ein Roster-Objekt umzuwandeln.
+     */
     public LiveData<Roster> getRosterData(LocalDate startDate, LocalDate endDate) {
-        MutableLiveData<Roster> rosterLiveData = new MutableLiveData<>();
-        executor.execute(() -> {
-            Roster roster = getRosterForDateRange(startDate, endDate);
-            rosterLiveData.postValue(roster);
-        });
-        return rosterLiveData;
-    }
-
-    public Roster getRosterForDateRange(LocalDate startDate, LocalDate endDate) {
-        Roster roster = new Roster();
-        LiveData<List<RosterItem>> rosterItemsLiveData = rosterItemDao.getRosterItemsForDateRange(startDate, endDate);
-        List<RosterItem> rosterItems = rosterItemsLiveData.getValue();
-
-        if (rosterItems == null) {
-            return roster;
-        }
-
-        // Group RosterItems by date to create RosterDays
-        Map<LocalDate, RosterDay> rosterDayMap = new HashMap<>();
-        for (RosterItem item : rosterItems) {
-            LocalDate date = item.getLocalDate();
-            RosterDay rosterDay = rosterDayMap.get(date);
-            if (rosterDay == null) {
-                rosterDay = new RosterDay(date);
-                rosterDayMap.put(date, rosterDay);
+        return Transformations.map(rosterItemDao.getRosterItemsForDateRange(startDate, endDate), rosterItems -> {
+            Roster roster = new Roster();
+            if (rosterItems == null || rosterItems.isEmpty()) {
+                return roster;
             }
-            rosterDay.addRosterItem(item);
-        }
 
-        // Add RosterDays to the Roster
-        for (RosterDay rosterDay : rosterDayMap.values()) {
-            roster.addRosterDay(rosterDay);
-        }
+            // Gruppiere RosterItems nach Datum
+            Map<LocalDate, RosterDay> rosterDayMap = new HashMap<>();
+            for (RosterItem item : rosterItems) {
+                LocalDate date = item.getLocalDate();
+                RosterDay rosterDay = rosterDayMap.get(date);
+                if (rosterDay == null) {
+                    rosterDay = new RosterDay(date);
+                    rosterDayMap.put(date, rosterDay);
+                }
+                rosterDay.addRosterItem(item);
+            }
 
-        return roster;
+            // Füge die Tage dem Roster hinzu
+            for (RosterDay rosterDay : rosterDayMap.values()) {
+                roster.addRosterDay(rosterDay);
+            }
+
+            return roster;
+        });
     }
 
-    public void fetchAndSaveRosterData() {
+    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null");
             return;
         }
-        retrofitNetworkHandler.fetchRoster(token, new RetrofitNetworkHandler.NetworkResponseCallback<Roster>() {
+        retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
             @Override
-            public void onSuccess(Roster roster) {
+            public void onSuccess(List<RosterItem> rosterItems) {
                 executor.execute(() -> {
                     rosterItemDao.clearRosterItems();
-                    List<RosterItem> rosterItems = new ArrayList<>();
-                    for (RosterDay rosterDay : roster.getRosterDays()) {
-                        rosterItems.addAll(rosterDay.getRosterItems());
+                    if (rosterItems != null && !rosterItems.isEmpty()) {
+                        rosterItemDao.insertRosterItems(rosterItems);
+                        Log.d(TAG, "Roster data saved to database: " + rosterItems.size() + " items.");
+                    } else {
+                        Log.d(TAG, "No roster items received from server.");
                     }
-                    rosterItemDao.insertRosterItems(rosterItems);
                 });
             }
 

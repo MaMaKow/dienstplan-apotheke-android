@@ -9,6 +9,7 @@ import de.mamakow.dienstplanapotheke.network.NetworkHandler;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class SessionManager {
+    private static final String TAG = "SessionManager";
     private static final String PREFS_NAME = "AppPreferences";
     private static final String TOKEN_KEY = "session_token";
     private final SharedPreferences sharedPreferences;
@@ -20,57 +21,51 @@ public class SessionManager {
     }
 
     public void performLogin() {
-        Log.d("SessionManager", "performLogin 0");
-        Dotenv dotenv = Dotenv.configure()
-                .directory("/assets")
-                .filename("env") // instead of '.env', use 'env'
-                .load();
+        Log.d(TAG, "performLogin gestartet");
+        try {
+            Dotenv dotenv = Dotenv.configure()
+                    .directory("/assets")
+                    .filename("env")
+                    .load();
 
-        String userName = dotenv.get("USERNAME");
-        String userPassphrase = dotenv.get("PASSPHRASE");
-        Log.i("SessionManager", "username = " + userName);
-        networkHandler.login(userName, userPassphrase, new LoginCallback() {
-            @Override
-            public void onSuccess(String token) {
-                saveToken(token);
-                Log.i("SessionManager", "Login successful. Token saved.");
+            String userName = dotenv.get("USERNAME");
+            String userPassphrase = dotenv.get("PASSPHRASE");
+
+            if (userName == null || userPassphrase == null) {
+                Log.e(TAG, "Username oder Passphrase in .env nicht gefunden!");
+                return;
             }
 
-            @Override
-            public void onFailure(Exception exception) {
-                Log.e("SessionManager", "Login failed.", exception);
-                Log.e("SessionManager", exception.getLocalizedMessage(), exception);
-                Log.getStackTraceString(exception);
-            }
-        });
-        Log.d("SessionManager", "performLogin 99");
+            Log.i(TAG, "Versuche Login für User: " + userName);
+            networkHandler.login(userName, userPassphrase, new LoginCallback() {
+                @Override
+                public void onSuccess(String token) {
+                    saveToken(token);
+                    Log.i(TAG, "Login erfolgreich. Token erhalten und gespeichert.");
+                }
 
+                @Override
+                public void onFailure(Exception exception) {
+                    Log.e(TAG, "Login fehlgeschlagen: " + exception.getMessage(), exception);
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Fehler beim Laden der .env Datei oder beim Login-Prozess", e);
+        }
     }
 
     public void saveToken(String token) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(TOKEN_KEY, token);
         editor.apply();
-        Log.i("SessionManager", "Token was saved");
-        Log.i("SessionManager", token);
+        Log.d(TAG, "Token in SharedPreferences gespeichert: " + (token != null ? "vorhanden" : "null"));
     }
 
     public boolean isNotLoggedIn() {
-        String token = sharedPreferences.getString(TOKEN_KEY, null);
-        try {
-            Log.d("SessionManager", token);
-        } catch (Exception exception) {
-            Log.d("SessionManager", "Could not print token. Probably it is null.");
-
-            Log.getStackTraceString(exception);
-        }
-        boolean result = token != null;
-        if (result) {
-            Log.d("SessionManager", "token is set. We are logged in.");
-        } else {
-            Log.d("SessionManager", "token is null. We need to log in.");
-        }
-        return !result;
+        String token = getSessionToken();
+        boolean loggedIn = token != null && !token.isEmpty();
+        Log.d(TAG, "Check Login-Status: " + (loggedIn ? "Eingeloggt" : "NICHT eingeloggt"));
+        return !loggedIn;
     }
 
     public String getSessionToken() {
@@ -78,6 +73,7 @@ public class SessionManager {
     }
 
     public void logout() {
+        Log.d(TAG, "Logout: Lösche Token aus SharedPreferences");
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove(TOKEN_KEY);
         editor.apply();

@@ -2,4 +2,7 @@
     <string name="app_name">Pharmacy Duty Roster</string>
     <string name="test_page_url" translatable="false">https://martin-mandelkow.de/development/testing/dienstplan-test/</string>
     <string name="unknown_branch">Unknown Branch</string>
+    <string name="api_base_url" translatable="false">
+        https://martin-mandelkow.de/development/testing/dienstplan-test/src/php/restful-api/
+    </string>
 </resources>

@@ -1,6 +1,6 @@
 plugins {
     //alias(libs.plugins.android.application)
-    id("com.android.application") version "8.7.3"
+    id("com.android.application") version "8.13.2"
     id("org.jetbrains.kotlin.android") version "2.0.0"
 
 }
@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
     implementation(libs.room.common)
     implementation(libs.room.runtime)
     testImplementation(libs.junit)
