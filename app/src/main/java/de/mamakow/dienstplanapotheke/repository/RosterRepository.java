@@ -3,7 +3,7 @@ package de.mamakow.dienstplanapotheke.repository;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Transformations;
+import androidx.lifecycle.MediatorLiveData;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -35,40 +35,46 @@ public class RosterRepository {
 
     /**
      * Gibt ein LiveData-Objekt zurück, das den Roster für einen Zeitraum darstellt.
-     * Nutzt Transformations.map, um die Liste der RosterItems aus der DB in ein Roster-Objekt umzuwandeln.
+     * Nutzt MediatorLiveData und einen Executor, um die Gruppierung im Hintergrund auszuführen,
+     * damit der Main-Thread nicht blockiert wird.
      */
     public LiveData<Roster> getRosterData(LocalDate startDate, LocalDate endDate) {
-        return Transformations.map(rosterItemDao.getRosterItemsForDateRange(startDate, endDate), rosterItems -> {
-            Roster roster = new Roster();
-            if (rosterItems == null || rosterItems.isEmpty()) {
-                return roster;
-            }
+        MediatorLiveData<Roster> result = new MediatorLiveData<>();
+        LiveData<List<RosterItem>> source = rosterItemDao.getRosterItemsForDateRange(startDate, endDate);
 
-            // Gruppiere RosterItems nach Datum
-            Map<LocalDate, RosterDay> rosterDayMap = new HashMap<>();
-            for (RosterItem item : rosterItems) {
-                LocalDate date = item.getLocalDate();
-                RosterDay rosterDay = rosterDayMap.get(date);
-                if (rosterDay == null) {
-                    rosterDay = new RosterDay(date);
-                    rosterDayMap.put(date, rosterDay);
+        result.addSource(source, rosterItems -> {
+            executor.execute(() -> {
+                Roster roster = new Roster();
+                if (rosterItems != null && !rosterItems.isEmpty()) {
+                    // Gruppiere RosterItems nach Datum
+                    Map<LocalDate, RosterDay> rosterDayMap = new HashMap<>();
+                    for (RosterItem item : rosterItems) {
+                        LocalDate date = item.getLocalDate();
+                        RosterDay rosterDay = rosterDayMap.get(date);
+                        if (rosterDay == null) {
+                            rosterDay = new RosterDay(date);
+                            rosterDayMap.put(date, rosterDay);
+                        }
+                        rosterDay.addRosterItem(item);
+                    }
+
+                    // Füge die Tage dem Roster hinzu
+                    for (RosterDay rosterDay : rosterDayMap.values()) {
+                        roster.addRosterDay(rosterDay);
+                    }
                 }
-                rosterDay.addRosterItem(item);
-            }
-
-            // Füge die Tage dem Roster hinzu
-            for (RosterDay rosterDay : rosterDayMap.values()) {
-                roster.addRosterDay(rosterDay);
-            }
-
-            return roster;
+                result.postValue(roster);
+            });
         });
+
+        return result;
     }
 
     public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
-            Log.e(TAG, "Token is null");
+            Log.e(TAG, "Token is null. Triggering login...");
+            sessionManager.performLogin();
             return;
         }
         retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
@@ -88,6 +94,14 @@ public class RosterRepository {
             @Override
             public void onError(String errorMessage) {
                 Log.e(TAG, "Error fetching roster data: " + errorMessage);
+                if (errorMessage != null && errorMessage.contains("Token expired")) {
+                    Log.i(TAG, "Token expired detected. Clearing token and triggering re-login.");
+                    sessionManager.logout();
+                    sessionManager.performLogin();
+                    // Optional: Nach dem Login erneut versuchen zu laden? 
+                    // Das könnte komplex werden (Callback-Chain). 
+                    // Fürs erste reicht der Re-Login.
+                }
             }
         });
     }

@@ -5,7 +5,10 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,6 +33,7 @@ public class RetrofitNetworkHandler {
 
     final String TAG = "RetrofitNetHandler";
     private final RosterApi rosterApi;
+    private final Gson gson;
 
     public RetrofitNetworkHandler(Context context) {
         String apiBaseUrl = context.getString(R.string.api_base_url);
@@ -41,7 +45,7 @@ public class RetrofitNetworkHandler {
                 .addInterceptor(logging)
                 .build();
 
-        Gson gson = new GsonBuilder()
+        this.gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, typeOfT, context1) ->
                         LocalDate.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE))
                 .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, typeOfT, context1) -> {
@@ -63,19 +67,39 @@ public class RetrofitNetworkHandler {
     public void fetchRoster(String token, String dateStart, String dateEnd, Integer employeeKey, NetworkResponseCallback<List<RosterItem>> callback) {
         Log.d(TAG, "fetchRoster() gestartet für Zeitraum: " + dateStart + " bis " + dateEnd);
 
-        Call<List<DayWrapper>> call = rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey);
-        call.enqueue(new Callback<List<DayWrapper>>() {
+        // Wir verwenden JsonElement, um sowohl Arrays (Erfolg) als auch Objekte (Fehler wie "Token expired") zu handhaben
+        Call<JsonElement> call = rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey);
+        call.enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<List<DayWrapper>> call, Response<List<DayWrapper>> response) {
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<RosterItem> allItems = new ArrayList<>();
-                    for (DayWrapper day : response.body()) {
-                        if (day.roster != null) {
-                            allItems.addAll(day.roster);
+                    JsonElement body = response.body();
+
+                    if (body.isJsonArray()) {
+                        // Erfolgsfall: Wir haben eine Liste von Tagen erhalten
+                        List<RosterItem> allItems = new ArrayList<>();
+                        JsonArray daysArray = body.getAsJsonArray();
+                        for (JsonElement dayElement : daysArray) {
+                            DayWrapper day = gson.fromJson(dayElement, DayWrapper.class);
+                            if (day.roster != null) {
+                                allItems.addAll(day.roster);
+                            }
                         }
+                        Log.d(TAG, "Erfolgreich " + allItems.size() + " Einträge extrahiert.");
+                        callback.onSuccess(allItems);
+                    } else if (body.isJsonObject()) {
+                        // Möglicher Fehlerfall im Body bei 200 OK (z.B. {"error": "Token expired"})
+                        JsonObject obj = body.getAsJsonObject();
+                        if (obj.has("error")) {
+                            String errorMsg = obj.get("error").getAsString();
+                            Log.e(TAG, "API Fehler erhalten: " + errorMsg);
+                            callback.onError(errorMsg);
+                        } else {
+                            callback.onError("Unerwartetes JSON-Objekt erhalten");
+                        }
+                    } else {
+                        callback.onError("Unerwartetes Antwortformat");
                     }
-                    Log.d(TAG, "Erfolgreich " + allItems.size() + " Einträge extrahiert.");
-                    callback.onSuccess(allItems);
                 } else {
                     String errorMsg = "Fehler " + response.code() + ": " + response.message();
                     Log.e(TAG, errorMsg);
@@ -84,16 +108,16 @@ public class RetrofitNetworkHandler {
             }
 
             @Override
-            public void onFailure(Call<List<DayWrapper>> call, Throwable t) {
+            public void onFailure(Call<JsonElement> call, Throwable t) {
                 Log.e(TAG, "Netzwerkfehler in fetchRoster", t);
                 callback.onError("Netzwerkfehler: " + t.getMessage());
             }
         });
     }
 
-    public interface RosterApi {
+    private interface RosterApi {
         @GET("rosters")
-        Call<List<DayWrapper>> getRoster(
+        Call<JsonElement> getRoster(
                 @Header("Authorization") String authorization,
                 @Query("dateStart") String dateStart,
                 @Query("dateEnd") String dateEnd,

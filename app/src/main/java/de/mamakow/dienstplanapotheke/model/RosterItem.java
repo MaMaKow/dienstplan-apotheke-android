@@ -167,6 +167,6 @@ public class RosterItem {
     }
 
     public enum Status {
-        TENTATIVE, CONFIRMED, CANCELLED;
+        TENTATIVE, CONFIRMED, CANCELLED
     }
 }
