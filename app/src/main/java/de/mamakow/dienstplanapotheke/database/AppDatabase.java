@@ -11,7 +11,7 @@ import de.mamakow.dienstplanapotheke.model.Converters;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 
-@Database(entities = {RosterItem.class, Employee.class}, version = 1, exportSchema = false)
+@Database(entities = {RosterItem.class, Employee.class}, version = 2, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

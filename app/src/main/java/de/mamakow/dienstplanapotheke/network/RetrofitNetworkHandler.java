@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.mamakow.dienstplanapotheke.R;
+import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -46,11 +47,14 @@ public class RetrofitNetworkHandler {
                 .build();
 
         this.gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, typeOfT, context1) ->
-                        LocalDate.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE))
+                .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, typeOfT, context1) -> {
+                    String val = json.getAsString();
+                    if (val == null || val.isEmpty() || val.equals("null")) return null;
+                    return LocalDate.parse(val, DateTimeFormatter.ISO_LOCAL_DATE);
+                })
                 .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, typeOfT, context1) -> {
                     String val = json.getAsString();
-                    // Unterstützung für verschiedene ISO Formate
+                    if (val == null || val.isEmpty() || val.equals("null")) return null;
                     return LocalDateTime.parse(val, DateTimeFormatter.ISO_DATE_TIME);
                 })
                 .create();
@@ -67,7 +71,6 @@ public class RetrofitNetworkHandler {
     public void fetchRoster(String token, String dateStart, String dateEnd, Integer employeeKey, NetworkResponseCallback<List<RosterItem>> callback) {
         Log.d(TAG, "fetchRoster() gestartet für Zeitraum: " + dateStart + " bis " + dateEnd);
 
-        // Wir verwenden JsonElement, um sowohl Arrays (Erfolg) als auch Objekte (Fehler wie "Token expired") zu handhaben
         Call<JsonElement> call = rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey);
         call.enqueue(new Callback<JsonElement>() {
             @Override
@@ -76,7 +79,6 @@ public class RetrofitNetworkHandler {
                     JsonElement body = response.body();
 
                     if (body.isJsonArray()) {
-                        // Erfolgsfall: Wir haben eine Liste von Tagen erhalten
                         List<RosterItem> allItems = new ArrayList<>();
                         JsonArray daysArray = body.getAsJsonArray();
                         for (JsonElement dayElement : daysArray) {
@@ -88,7 +90,6 @@ public class RetrofitNetworkHandler {
                         Log.d(TAG, "Erfolgreich " + allItems.size() + " Einträge extrahiert.");
                         callback.onSuccess(allItems);
                     } else if (body.isJsonObject()) {
-                        // Möglicher Fehlerfall im Body bei 200 OK (z.B. {"error": "Token expired"})
                         JsonObject obj = body.getAsJsonObject();
                         if (obj.has("error")) {
                             String errorMsg = obj.get("error").getAsString();
@@ -115,6 +116,26 @@ public class RetrofitNetworkHandler {
         });
     }
 
+    public void fetchEmployees(String token, NetworkResponseCallback<List<Employee>> callback) {
+        Log.d(TAG, "fetchEmployees() gestartet");
+        Call<List<Employee>> call = rosterApi.getEmployees("Bearer " + token);
+        call.enqueue(new Callback<List<Employee>>() {
+            @Override
+            public void onResponse(Call<List<Employee>> call, Response<List<Employee>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    callback.onSuccess(response.body());
+                } else {
+                    callback.onError("Fehler beim Abrufen der Mitarbeiter: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Employee>> call, Throwable t) {
+                callback.onError("Netzwerkfehler bei fetchEmployees: " + t.getMessage());
+            }
+        });
+    }
+
     private interface RosterApi {
         @GET("rosters")
         Call<JsonElement> getRoster(
@@ -123,6 +144,9 @@ public class RetrofitNetworkHandler {
                 @Query("dateEnd") String dateEnd,
                 @Query("employeeKey") Integer employeeKey
         );
+
+        @GET("employees")
+        Call<List<Employee>> getEmployees(@Header("Authorization") String authorization);
     }
 
     public interface NetworkResponseCallback<T> {

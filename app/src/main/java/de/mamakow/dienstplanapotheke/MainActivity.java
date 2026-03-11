@@ -9,13 +9,17 @@ import androidx.lifecycle.LiveData;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import de.mamakow.dienstplanapotheke.database.AppDatabase;
+import de.mamakow.dienstplanapotheke.database.EmployeeDao;
 import de.mamakow.dienstplanapotheke.database.RosterItemDao;
+import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.Roster;
 import de.mamakow.dienstplanapotheke.model.RosterDay;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
+import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
 import de.mamakow.dienstplanapotheke.repository.RosterRepository;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 
@@ -27,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         RosterItemDao rosterItemDao = AppDatabase.getDatabase(this).rosterDao();
+        EmployeeDao employeeDao = AppDatabase.getDatabase(this).employeeDao();
         SessionManager sessionManager = new SessionManager(this);
 
         if (sessionManager.isNotLoggedIn()) {
@@ -35,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
 
         RetrofitNetworkHandler retrofitNetworkHandler = new RetrofitNetworkHandler(this);
         RosterRepository rosterRepository = new RosterRepository(retrofitNetworkHandler, rosterItemDao, sessionManager);
+        EmployeeRepository employeeRepository = new EmployeeRepository(employeeDao, retrofitNetworkHandler, sessionManager);
+
+        // Mitarbeiter synchronisieren
+        employeeRepository.fetchAndSaveEmployees();
 
         LocalDate today = LocalDate.now();
         // Berechne Montag der aktuellen Woche
@@ -51,7 +60,12 @@ public class MainActivity extends AppCompatActivity {
             for (RosterDay rosterDay : rosterDays) {
                 Log.d("MainActivity", "Tag gefunden: " + rosterDay.getLocalDate());
                 for (RosterItem rosterItem : rosterDay.getRosterItems()) {
-                    Log.d("MainActivity", "  Eintrag: Mitarbeiter " + rosterItem.getEmployeeKey() + " am " + rosterItem.getLocalDate());
+                    // Da DB-Abfragen nicht auf dem Main-Thread erlaubt sind, nutzen wir einen Executor für den Log-Check
+                    Executors.newSingleThreadExecutor().execute(() -> {
+                        Employee e = employeeRepository.getEmployeeByEmployeeKey(rosterItem.getEmployeeKey());
+                        String name = (e != null) ? e.getEmployeeFullName() : "Unbekannt (" + rosterItem.getEmployeeKey() + ")";
+                        Log.d("MainActivity", "  Eintrag: " + name + " am " + rosterItem.getLocalDate());
+                    });
                 }
             }
         });

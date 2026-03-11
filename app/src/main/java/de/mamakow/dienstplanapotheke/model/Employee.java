@@ -4,47 +4,63 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.time.LocalDate;
 
 @Entity(tableName = "employee_table")
 public class Employee {
-    @PrimaryKey(autoGenerate = true)
-    public int id; // Changed to public
 
+    @PrimaryKey
+    @SerializedName("id")
     @ColumnInfo(name = "employee_key")
     private int employeeKey;
+
+    @SerializedName("last_name")
     @ColumnInfo(name = "employee_last_name")
     private String employeeLastName;
+
+    @SerializedName("first_name")
     @ColumnInfo(name = "employee_first_name")
     private String employeeFirstName;
+
+    @SerializedName("profession")
     @ColumnInfo(name = "employee_profession")
     private String employeeProfession;
+
+    @SerializedName("working_hours")
     @ColumnInfo(name = "employee_working_hours")
     private float employeeWorkingHours;
+
+    @SerializedName("lunch_break_minutes")
     @ColumnInfo(name = "employee_lunch_break_minutes")
     private int employeeLunchBreakMinutes;
+
+    @SerializedName("holidays")
     @ColumnInfo(name = "employee_holidays")
     private int employeeHolidays;
+
+    @SerializedName("abilities_goods_receipt")
     @ColumnInfo(name = "employee_abilities_goods_receipt")
     private boolean employeeAbilitiesGoodsReceipt;
+
+    @SerializedName("abilities_compounding")
     @ColumnInfo(name = "employee_abilities_compounding")
     private boolean employeeAbilitiesCompounding;
+
+    @SerializedName("branch")
     @ColumnInfo(name = "employee_branch_id")
-    private int employeeBranchId;
+    private Integer employeeBranchId; // Integer für null-Werte
+
+    @SerializedName("start_of_employment")
     @ColumnInfo(name = "employee_start_of_employment")
     private LocalDate employeeStartOfEmployment;
+
+    @SerializedName("end_of_employment")
     @ColumnInfo(name = "employee_end_of_employment")
     private LocalDate employeeEndOfEmployment;
 
     public Employee() {
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public int getEmployeeKey() {
@@ -115,11 +131,11 @@ public class Employee {
         this.employeeAbilitiesCompounding = employeeAbilitiesCompounding;
     }
 
-    public int getEmployeeBranchId() {
+    public Integer getEmployeeBranchId() {
         return employeeBranchId;
     }
 
-    public void setEmployeeBranchId(int employeeBranchId) {
+    public void setEmployeeBranchId(Integer employeeBranchId) {
         this.employeeBranchId = employeeBranchId;
     }
 
