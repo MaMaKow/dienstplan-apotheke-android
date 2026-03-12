@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         SessionManager sessionManager = new SessionManager(this);
+        //sessionManager.logout();
         if (sessionManager.isNotLoggedIn()) {
             sessionManager.performLogin();
         }

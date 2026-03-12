@@ -88,13 +88,17 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
 
                 text1.setText(name);
 
-                String timeRange = item.getDutyStartDateTime().format(timeFormatter) + " - " + item.getDutyEndDateTime().format(timeFormatter);
-                if (item.getComment() != null && !item.getComment().isEmpty()) {
-                    timeRange += " (" + item.getComment() + ")";
+                String detailedInformation = item.getDutyStartDateTime().format(timeFormatter) + " - " + item.getDutyEndDateTime().format(timeFormatter);
+                if (item.getBreakStartDateTime() != null && item.getBreakEndDateTime() != null) {
+                    detailedInformation += "\nPause: " + item.getBreakStartDateTime().format(timeFormatter) + " - " + item.getBreakEndDateTime().format(timeFormatter);
                 }
-                text2.setText(timeRange);
+                if (item.getComment() != null && !item.getComment().isEmpty()) {
+                    detailedInformation += "\n(" + item.getComment() + ")";
+                }
+                text2.setText(detailedInformation);
 
-                layoutRosterItems.addView(subItemView);
+                //layoutRosterItems.addView(subItemView);
+                layoutRosterItems.addView(subItemView, layoutRosterItems.getChildCount());
             }
         }
     }

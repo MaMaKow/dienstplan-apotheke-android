@@ -30,7 +30,9 @@ public interface RosterItemDao {
     @Query("DELETE FROM roster_table")
     void clearRosterItems();
 
-    @Query("SELECT * FROM roster_table WHERE local_date >= :startDate AND local_date <= :endDate")
+
+    // In RosterItemDao.java
+    @Query("SELECT * FROM roster_table WHERE local_date >= :startDate AND local_date <= :endDate ORDER BY local_date ASC, duty_start_date_time ASC")
     LiveData<List<RosterItem>> getRosterItemsForDateRange(LocalDate startDate, LocalDate endDate);
 
     @Query("SELECT * FROM roster_table WHERE local_date = :date")

@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
 import java.time.LocalDate;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -47,7 +47,7 @@ public class RosterRepository {
                 Roster roster = new Roster();
                 if (rosterItems != null && !rosterItems.isEmpty()) {
                     // Gruppiere RosterItems nach Datum
-                    Map<LocalDate, RosterDay> rosterDayMap = new HashMap<>();
+                    Map<LocalDate, RosterDay> rosterDayMap = new LinkedHashMap<>();
                     for (RosterItem item : rosterItems) {
                         LocalDate date = item.getLocalDate();
                         RosterDay rosterDay = rosterDayMap.get(date);
