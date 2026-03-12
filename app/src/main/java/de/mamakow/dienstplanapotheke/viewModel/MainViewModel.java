@@ -10,9 +10,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 import de.mamakow.dienstplanapotheke.database.AppDatabase;
+import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.Roster;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
+import de.mamakow.dienstplanapotheke.repository.BranchRepository;
 import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
 import de.mamakow.dienstplanapotheke.repository.RosterRepository;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
@@ -20,6 +22,7 @@ import de.mamakow.dienstplanapotheke.session.SessionManager;
 public class MainViewModel extends AndroidViewModel {
     private final RosterRepository rosterRepository;
     private final EmployeeRepository employeeRepository;
+    private final BranchRepository branchRepository;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -29,6 +32,7 @@ public class MainViewModel extends AndroidViewModel {
 
         rosterRepository = new RosterRepository(networkHandler, db.rosterDao(), sessionManager);
         employeeRepository = new EmployeeRepository(db.employeeDao(), networkHandler, sessionManager);
+        branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
     }
 
     public LiveData<Roster> getRoster(LocalDate startDate, LocalDate endDate) {
@@ -39,8 +43,13 @@ public class MainViewModel extends AndroidViewModel {
         return employeeRepository.getAllEmployeesLiveData();
     }
 
+    public LiveData<List<Branch>> getBranches() {
+        return branchRepository.getAllBranches();
+    }
+
     public void refreshData(LocalDate startDate, LocalDate endDate, int employeeKey) {
         employeeRepository.fetchAndSaveEmployees();
+        branchRepository.fetchAndSaveBranches();
         rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey);
     }
 }

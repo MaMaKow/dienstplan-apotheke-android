@@ -1,6 +1,7 @@
 package de.mamakow.dienstplanapotheke;
 
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -18,6 +19,7 @@ import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private MainViewModel viewModel;
     private RosterAdapter adapter;
 
@@ -27,8 +29,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         SessionManager sessionManager = new SessionManager(this);
-        //sessionManager.logout();
+        String token = sessionManager.getSessionToken();
+        Log.i(TAG, "Session Token vorhanden: " + (token != null && !token.isEmpty()));
+
         if (sessionManager.isNotLoggedIn()) {
+            Log.i(TAG, "Nicht eingeloggt, starte Login...");
             sessionManager.performLogin();
         }
 
@@ -41,22 +46,32 @@ public class MainActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         LocalDate today = LocalDate.now();
-        //LocalDate mondayDate = today.minusDays((today.getDayOfWeek().getValue() - 1));
         LocalDate firstMondayInJuly = LocalDate.of(today.getYear(), Month.JULY, 1).with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
         LocalDate sundayDate = firstMondayInJuly.plusDays(6);
         int employeeKey = 7;
+
         viewModel.getRoster(firstMondayInJuly, sundayDate).observe(this, roster -> {
             if (roster != null) {
+                Log.i(TAG, "Roster Daten empfangen: " + roster.getRosterDays().size() + " Tage");
                 adapter.setRosterDays(roster.getRosterDays());
             }
         });
 
         viewModel.getEmployees().observe(this, employees -> {
             if (employees != null) {
+                Log.i(TAG, "Mitarbeiter aus DB: " + employees.size());
                 adapter.setEmployees(employees);
             }
         });
 
+        viewModel.getBranches().observe(this, branches -> {
+            if (branches != null) {
+                Log.i(TAG, "Filialen aus DB: " + branches.size());
+                adapter.setBranches(branches);
+            }
+        });
+
+        Log.i(TAG, "Starte Daten-Refresh...");
         viewModel.refreshData(firstMondayInJuly, sundayDate, employeeKey);
     }
 }

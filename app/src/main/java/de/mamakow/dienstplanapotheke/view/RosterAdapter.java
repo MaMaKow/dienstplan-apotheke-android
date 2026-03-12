@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import de.mamakow.dienstplanapotheke.R;
+import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterDay;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
@@ -24,6 +25,7 @@ import de.mamakow.dienstplanapotheke.model.RosterItem;
 public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterViewHolder> {
 
     private final Map<Integer, Employee> employeeMap = new HashMap<>();
+    private final Map<Integer, Branch> branchMap = new HashMap<>();
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd.MM.yyyy", Locale.GERMAN);
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     private List<RosterDay> rosterDays = new ArrayList<>();
@@ -41,6 +43,16 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
         if (employees != null) {
             for (Employee e : employees) {
                 employeeMap.put(e.getEmployeeKey(), e);
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public void setBranches(List<Branch> branches) {
+        branchMap.clear();
+        if (branches != null) {
+            for (Branch b : branches) {
+                branchMap.put(b.getBranchId(), b);
             }
         }
         notifyDataSetChanged();
@@ -95,9 +107,13 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
                 if (item.getComment() != null && !item.getComment().isEmpty()) {
                     detailedInformation += "\n(" + item.getComment() + ")";
                 }
+
+                int branchId = item.getBranchId();
+                Branch branch = branchMap.get(branchId);
+                String branchName = (branch != null) ? branch.getBranchName() : "Unbekannt (" + branchId + ")";
+                detailedInformation += "\nFiliale: " + branchName;
                 text2.setText(detailedInformation);
 
-                //layoutRosterItems.addView(subItemView);
                 layoutRosterItems.addView(subItemView, layoutRosterItems.getChildCount());
             }
         }

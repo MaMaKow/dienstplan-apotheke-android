@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.mamakow.dienstplanapotheke.R;
+import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 import okhttp3.OkHttpClient;
@@ -28,6 +29,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public class RetrofitNetworkHandler {
@@ -39,7 +41,6 @@ public class RetrofitNetworkHandler {
     public RetrofitNetworkHandler(Context context) {
         String apiBaseUrl = context.getString(R.string.api_base_url);
 
-        // Logging für HTTP Requests hinzufügen
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient client = new OkHttpClient.Builder()
@@ -69,7 +70,7 @@ public class RetrofitNetworkHandler {
     }
 
     public void fetchRoster(String token, String dateStart, String dateEnd, Integer employeeKey, NetworkResponseCallback<List<RosterItem>> callback) {
-        Log.d(TAG, "fetchRoster() gestartet für Zeitraum: " + dateStart + " bis " + dateEnd);
+        Log.i(TAG, "fetchRoster() gestartet für Zeitraum: " + dateStart + " bis " + dateEnd);
 
         Call<JsonElement> call = rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey);
         call.enqueue(new Callback<JsonElement>() {
@@ -87,7 +88,7 @@ public class RetrofitNetworkHandler {
                                 allItems.addAll(day.roster);
                             }
                         }
-                        Log.d(TAG, "Erfolgreich " + allItems.size() + " Einträge extrahiert.");
+                        Log.i(TAG, "Erfolgreich " + allItems.size() + " Einträge extrahiert.");
                         callback.onSuccess(allItems);
                     } else if (body.isJsonObject()) {
                         JsonObject obj = body.getAsJsonObject();
@@ -117,21 +118,68 @@ public class RetrofitNetworkHandler {
     }
 
     public void fetchEmployees(String token, NetworkResponseCallback<List<Employee>> callback) {
-        Log.d(TAG, "fetchEmployees() gestartet");
+        Log.i(TAG, "fetchEmployees() gestartet");
         Call<List<Employee>> call = rosterApi.getEmployees("Bearer " + token);
         call.enqueue(new Callback<List<Employee>>() {
             @Override
             public void onResponse(Call<List<Employee>> call, Response<List<Employee>> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Log.i(TAG, "Mitarbeiter erfolgreich geladen: " + response.body().size());
                     callback.onSuccess(response.body());
                 } else {
+                    Log.e(TAG, "Fehler Mitarbeiter: " + response.code());
                     callback.onError("Fehler beim Abrufen der Mitarbeiter: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<List<Employee>> call, Throwable t) {
+                Log.e(TAG, "Netzwerkfehler Mitarbeiter", t);
                 callback.onError("Netzwerkfehler bei fetchEmployees: " + t.getMessage());
+            }
+        });
+    }
+
+    public void fetchBranches(String token, NetworkResponseCallback<List<Branch>> callback) {
+        Log.i(TAG, "fetchBranches() gestartet");
+        Call<List<Branch>> call = rosterApi.getBranches("Bearer " + token);
+        call.enqueue(new Callback<List<Branch>>() {
+            @Override
+            public void onResponse(Call<List<Branch>> call, Response<List<Branch>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.i(TAG, "Filialen erfolgreich geladen: " + response.body().size());
+                    Log.i(TAG, "Daten: " + response.body().toString());
+                    callback.onSuccess(response.body());
+                } else {
+                    Log.e(TAG, "Fehler Filialen: " + response.code() + " " + response.message());
+                    callback.onError("Fehler beim Abrufen der Filialen: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Branch>> call, Throwable t) {
+                Log.e(TAG, "Netzwerkfehler Filialen", t);
+                callback.onError("Netzwerkfehler bei fetchBranches: " + t.getMessage());
+            }
+        });
+    }
+
+    public void fetchBranchById(String token, int branchId, NetworkResponseCallback<Branch> callback) {
+        Log.i(TAG, "fetchBranchById() gestartet für ID: " + branchId);
+        Call<Branch> call = rosterApi.getBranchById("Bearer " + token, branchId);
+        call.enqueue(new Callback<Branch>() {
+            @Override
+            public void onResponse(Call<Branch> call, Response<Branch> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    callback.onSuccess(response.body());
+                } else {
+                    callback.onError("Fehler beim Abrufen der Filiale " + branchId + ": " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Branch> call, Throwable t) {
+                callback.onError("Netzwerkfehler bei fetchBranchById: " + t.getMessage());
             }
         });
     }
@@ -147,6 +195,15 @@ public class RetrofitNetworkHandler {
 
         @GET("employees")
         Call<List<Employee>> getEmployees(@Header("Authorization") String authorization);
+
+        @GET("branches")
+        Call<List<Branch>> getBranches(@Header("Authorization") String authorization);
+
+        @GET("branches/{id}")
+        Call<Branch> getBranchById(
+                @Header("Authorization") String authorization,
+                @Path("id") int branchId
+        );
     }
 
     public interface NetworkResponseCallback<T> {

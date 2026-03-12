@@ -7,11 +7,12 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
+import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Converters;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 
-@Database(entities = {RosterItem.class, Employee.class}, version = 2, exportSchema = false)
+@Database(entities = {RosterItem.class, Employee.class, Branch.class}, version = 3, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -38,4 +39,6 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract RosterItemDao rosterDao();
 
     public abstract EmployeeDao employeeDao();
+
+    public abstract BranchDao branchDao();
 }
