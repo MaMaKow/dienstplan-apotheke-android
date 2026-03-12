@@ -70,7 +70,7 @@ public class RosterRepository {
         return result;
     }
 
-    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey) {
+    public void fetchAndSaveRosterData(String dateStart, String dateEnd, int employeeKey) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null. Triggering login...");

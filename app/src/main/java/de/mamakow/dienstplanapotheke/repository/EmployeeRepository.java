@@ -2,6 +2,8 @@ package de.mamakow.dienstplanapotheke.repository;
 
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
+
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -59,5 +61,9 @@ public class EmployeeRepository {
 
     public List<Employee> getAllEmployees() {
         return employeeDao.getAllEmployees();
+    }
+
+    public LiveData<List<Employee>> getAllEmployeesLiveData() {
+        return employeeDao.getAllEmployeesLiveData();
     }
 }

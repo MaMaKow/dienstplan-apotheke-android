@@ -1,5 +1,6 @@
 package de.mamakow.dienstplanapotheke.database;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -25,4 +26,7 @@ public interface EmployeeDao {
 
     @Query("SELECT * FROM employee_table")
     List<Employee> getAllEmployees();
+
+    @Query("SELECT * FROM employee_table")
+    LiveData<List<Employee>> getAllEmployeesLiveData();
 }

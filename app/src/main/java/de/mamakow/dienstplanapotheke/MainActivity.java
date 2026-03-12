@@ -1,76 +1,61 @@
 package de.mamakow.dienstplanapotheke;
 
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.concurrent.Executors;
+import java.time.Month;
+import java.time.temporal.TemporalAdjusters;
 
-import de.mamakow.dienstplanapotheke.database.AppDatabase;
-import de.mamakow.dienstplanapotheke.database.EmployeeDao;
-import de.mamakow.dienstplanapotheke.database.RosterItemDao;
-import de.mamakow.dienstplanapotheke.model.Employee;
-import de.mamakow.dienstplanapotheke.model.Roster;
-import de.mamakow.dienstplanapotheke.model.RosterDay;
-import de.mamakow.dienstplanapotheke.model.RosterItem;
-import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
-import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
-import de.mamakow.dienstplanapotheke.repository.RosterRepository;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
+import de.mamakow.dienstplanapotheke.view.RosterAdapter;
+import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 public class MainActivity extends AppCompatActivity {
+
+    private MainViewModel viewModel;
+    private RosterAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RosterItemDao rosterItemDao = AppDatabase.getDatabase(this).rosterDao();
-        EmployeeDao employeeDao = AppDatabase.getDatabase(this).employeeDao();
         SessionManager sessionManager = new SessionManager(this);
-
         if (sessionManager.isNotLoggedIn()) {
             sessionManager.performLogin();
         }
 
-        RetrofitNetworkHandler retrofitNetworkHandler = new RetrofitNetworkHandler(this);
-        RosterRepository rosterRepository = new RosterRepository(retrofitNetworkHandler, rosterItemDao, sessionManager);
-        EmployeeRepository employeeRepository = new EmployeeRepository(employeeDao, retrofitNetworkHandler, sessionManager);
+        RecyclerView recyclerView = findViewById(R.id.recyclerViewRoster);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Mitarbeiter synchronisieren
-        employeeRepository.fetchAndSaveEmployees();
+        adapter = new RosterAdapter();
+        recyclerView.setAdapter(adapter);
+
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         LocalDate today = LocalDate.now();
-        // Berechne Montag der aktuellen Woche
-        LocalDate mondayDate = today.minusDays((today.getDayOfWeek().getValue() - 1));
-        LocalDate sundayDate = mondayDate.plusDays(6);
-
-        Log.d("MainActivity", "Abfragezeitraum: " + mondayDate + " bis " + sundayDate);
-
-        LiveData<Roster> rosterData = rosterRepository.getRosterData(mondayDate, sundayDate);
-        rosterData.observe(this, roster -> {
-            List<RosterDay> rosterDays = roster.getRosterDays();
-            Log.d("MainActivity", "Anzahl der gefundenen RosterTage in der DB für diesen Zeitraum: " + rosterDays.size());
-
-            for (RosterDay rosterDay : rosterDays) {
-                Log.d("MainActivity", "Tag gefunden: " + rosterDay.getLocalDate());
-                for (RosterItem rosterItem : rosterDay.getRosterItems()) {
-                    // Da DB-Abfragen nicht auf dem Main-Thread erlaubt sind, nutzen wir einen Executor für den Log-Check
-                    Executors.newSingleThreadExecutor().execute(() -> {
-                        Employee e = employeeRepository.getEmployeeByEmployeeKey(rosterItem.getEmployeeKey());
-                        String name = (e != null) ? e.getEmployeeFullName() : "Unbekannt (" + rosterItem.getEmployeeKey() + ")";
-                        Log.d("MainActivity", "  Eintrag: " + name + " am " + rosterItem.getLocalDate());
-                    });
-                }
+        //LocalDate mondayDate = today.minusDays((today.getDayOfWeek().getValue() - 1));
+        LocalDate firstMondayInJuly = LocalDate.of(today.getYear(), Month.JULY, 1).with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+        LocalDate sundayDate = firstMondayInJuly.plusDays(6);
+        int employeeKey = 7;
+        viewModel.getRoster(firstMondayInJuly, sundayDate).observe(this, roster -> {
+            if (roster != null) {
+                adapter.setRosterDays(roster.getRosterDays());
             }
         });
 
-        // Daten vom Server laden (für Mitarbeiter 7)
-        rosterRepository.fetchAndSaveRosterData(mondayDate.format(DateTimeFormatter.ISO_DATE), sundayDate.format(DateTimeFormatter.ISO_DATE), 7);
+        viewModel.getEmployees().observe(this, employees -> {
+            if (employees != null) {
+                adapter.setEmployees(employees);
+            }
+        });
+
+        viewModel.refreshData(firstMondayInJuly, sundayDate, employeeKey);
     }
 }
