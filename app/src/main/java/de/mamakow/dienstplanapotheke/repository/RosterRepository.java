@@ -33,20 +33,14 @@ public class RosterRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    /**
-     * Gibt ein LiveData-Objekt zurück, das den Roster für einen Zeitraum darstellt.
-     * Nutzt MediatorLiveData und einen Executor, um die Gruppierung im Hintergrund auszuführen,
-     * damit der Main-Thread nicht blockiert wird.
-     */
-    public LiveData<Roster> getRosterData(LocalDate startDate, LocalDate endDate) {
+    public LiveData<Roster> getAllRosterData() {
         MediatorLiveData<Roster> result = new MediatorLiveData<>();
-        LiveData<List<RosterItem>> source = rosterItemDao.getRosterItemsForDateRange(startDate, endDate);
+        LiveData<List<RosterItem>> source = rosterItemDao.getAllRosterItems();
 
         result.addSource(source, rosterItems -> {
             executor.execute(() -> {
                 Roster roster = new Roster();
                 if (rosterItems != null && !rosterItems.isEmpty()) {
-                    // Gruppiere RosterItems nach Datum
                     Map<LocalDate, RosterDay> rosterDayMap = new LinkedHashMap<>();
                     for (RosterItem item : rosterItems) {
                         LocalDate date = item.getLocalDate();
@@ -57,8 +51,34 @@ public class RosterRepository {
                         }
                         rosterDay.addRosterItem(item);
                     }
+                    for (RosterDay rosterDay : rosterDayMap.values()) {
+                        roster.addRosterDay(rosterDay);
+                    }
+                }
+                result.postValue(roster);
+            });
+        });
+        return result;
+    }
 
-                    // Füge die Tage dem Roster hinzu
+    public LiveData<Roster> getRosterData(LocalDate startDate, LocalDate endDate) {
+        MediatorLiveData<Roster> result = new MediatorLiveData<>();
+        LiveData<List<RosterItem>> source = rosterItemDao.getRosterItemsForDateRange(startDate, endDate);
+
+        result.addSource(source, rosterItems -> {
+            executor.execute(() -> {
+                Roster roster = new Roster();
+                if (rosterItems != null && !rosterItems.isEmpty()) {
+                    Map<LocalDate, RosterDay> rosterDayMap = new LinkedHashMap<>();
+                    for (RosterItem item : rosterItems) {
+                        LocalDate date = item.getLocalDate();
+                        RosterDay rosterDay = rosterDayMap.get(date);
+                        if (rosterDay == null) {
+                            rosterDay = new RosterDay(date);
+                            rosterDayMap.put(date, rosterDay);
+                        }
+                        rosterDay.addRosterItem(item);
+                    }
                     for (RosterDay rosterDay : rosterDayMap.values()) {
                         roster.addRosterDay(rosterDay);
                     }
@@ -70,14 +90,14 @@ public class RosterRepository {
         return result;
     }
 
-    public void fetchAndSaveRosterData(String dateStart, String dateEnd, int employeeKey) {
+    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey, Integer branchId) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null. Triggering login...");
             sessionManager.performLogin();
             return;
         }
-        retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
+        retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
             @Override
             public void onSuccess(List<RosterItem> rosterItems) {
                 executor.execute(() -> {
@@ -94,13 +114,10 @@ public class RosterRepository {
             @Override
             public void onError(String errorMessage) {
                 Log.e(TAG, "Error fetching roster data: " + errorMessage);
-                if (errorMessage != null && errorMessage.contains("Token expired")) {
-                    Log.i(TAG, "Token expired detected. Clearing token and triggering re-login.");
+                if (errorMessage != null && (errorMessage.contains("Token expired") || errorMessage.contains("Invalid token"))) {
+                    Log.i(TAG, "Token issue detected. Triggering re-login.");
                     sessionManager.logout();
                     sessionManager.performLogin();
-                    // Optional: Nach dem Login erneut versuchen zu laden? 
-                    // Das könnte komplex werden (Callback-Chain). 
-                    // Fürs erste reicht der Re-Login.
                 }
             }
         });

@@ -27,6 +27,15 @@ public class EmployeeRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
+    private void handleNetworkError(String errorMessage) {
+        Log.e(TAG, "Network error: " + errorMessage);
+        if (errorMessage != null && (errorMessage.contains("Invalid token") || errorMessage.contains("Token expired"))) {
+            Log.i(TAG, "Token issue detected. Triggering re-login.");
+            sessionManager.logout();
+            sessionManager.performLogin();
+        }
+    }
+
     public Employee getEmployeeByEmployeeKey(int employeeKey) {
         return employeeDao.getEmployeeByEmployeeKey(employeeKey);
     }
@@ -39,6 +48,7 @@ public class EmployeeRepository {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null, cannot fetch employees.");
+            sessionManager.performLogin();
             return;
         }
 
@@ -54,7 +64,7 @@ public class EmployeeRepository {
 
             @Override
             public void onError(String errorMessage) {
-                Log.e(TAG, "Error fetching employees: " + errorMessage);
+                handleNetworkError(errorMessage);
             }
         });
     }

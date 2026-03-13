@@ -35,6 +35,10 @@ public class MainViewModel extends AndroidViewModel {
         branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
     }
 
+    public LiveData<Roster> getRoster() {
+        return rosterRepository.getAllRosterData();
+    }
+
     public LiveData<Roster> getRoster(LocalDate startDate, LocalDate endDate) {
         return rosterRepository.getRosterData(startDate, endDate);
     }
@@ -47,9 +51,9 @@ public class MainViewModel extends AndroidViewModel {
         return branchRepository.getAllBranches();
     }
 
-    public void refreshData(LocalDate startDate, LocalDate endDate, int employeeKey) {
+    public void refreshData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {
         employeeRepository.fetchAndSaveEmployees();
         branchRepository.fetchAndSaveBranches();
-        rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey);
+        rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId);
     }
 }

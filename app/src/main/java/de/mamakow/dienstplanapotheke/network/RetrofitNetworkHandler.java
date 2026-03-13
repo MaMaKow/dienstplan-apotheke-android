@@ -5,11 +5,12 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -69,141 +70,130 @@ public class RetrofitNetworkHandler {
         rosterApi = retrofit.create(RosterApi.class);
     }
 
-    public void fetchRoster(String token, String dateStart, String dateEnd, Integer employeeKey, NetworkResponseCallback<List<RosterItem>> callback) {
-        Log.i(TAG, "fetchRoster() gestartet für Zeitraum: " + dateStart + " bis " + dateEnd);
+    private <T> void handleListResponse(Response<JsonElement> response, Type listType, NetworkResponseCallback<List<T>> callback) {
+        if (response.isSuccessful() && response.body() != null) {
+            JsonElement body = response.body();
+            if (body.isJsonArray()) {
+                List<T> data = gson.fromJson(body, listType);
+                callback.onSuccess(data);
+            } else if (body.isJsonObject()) {
+                JsonObject obj = body.getAsJsonObject();
+                if (obj.has("error")) {
+                    callback.onError(obj.get("error").getAsString());
+                } else {
+                    callback.onError("Unerwartetes JSON-Objekt");
+                }
+            } else {
+                callback.onError("Unerwartetes Format");
+            }
+        } else {
+            callback.onError("Fehler " + response.code());
+        }
+    }
 
-        Call<JsonElement> call = rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey);
-        call.enqueue(new Callback<JsonElement>() {
+    private <T> void handleSingleResponse(Response<JsonElement> response, Type type, NetworkResponseCallback<T> callback) {
+        if (response.isSuccessful() && response.body() != null) {
+            JsonElement body = response.body();
+            if (body.isJsonObject()) {
+                JsonObject obj = body.getAsJsonObject();
+                if (obj.has("error")) {
+                    callback.onError(obj.get("error").getAsString());
+                } else {
+                    T data = gson.fromJson(body, type);
+                    callback.onSuccess(data);
+                }
+            } else {
+                callback.onError("Unerwartetes Format");
+            }
+        } else {
+            callback.onError("Fehler " + response.code());
+        }
+    }
+
+    public void fetchRoster(String token, String dateStart, String dateEnd, Integer employeeKey, Integer branchId, NetworkResponseCallback<List<RosterItem>> callback) {
+        Log.i(TAG, "fetchRoster() gestartet: " + dateStart + " bis " + dateEnd);
+        rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey, branchId).enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonElement body = response.body();
-
-                    if (body.isJsonArray()) {
-                        List<RosterItem> allItems = new ArrayList<>();
-                        JsonArray daysArray = body.getAsJsonArray();
-                        for (JsonElement dayElement : daysArray) {
-                            DayWrapper day = gson.fromJson(dayElement, DayWrapper.class);
-                            if (day.roster != null) {
-                                allItems.addAll(day.roster);
-                            }
-                        }
-                        Log.i(TAG, "Erfolgreich " + allItems.size() + " Einträge extrahiert.");
-                        callback.onSuccess(allItems);
-                    } else if (body.isJsonObject()) {
-                        JsonObject obj = body.getAsJsonObject();
-                        if (obj.has("error")) {
-                            String errorMsg = obj.get("error").getAsString();
-                            Log.e(TAG, "API Fehler erhalten: " + errorMsg);
-                            callback.onError(errorMsg);
-                        } else {
-                            callback.onError("Unerwartetes JSON-Objekt erhalten");
-                        }
-                    } else {
-                        callback.onError("Unerwartetes Antwortformat");
+                if (response.isSuccessful() && response.body() != null && response.body().isJsonArray()) {
+                    List<RosterItem> allItems = new ArrayList<>();
+                    for (JsonElement dayElement : response.body().getAsJsonArray()) {
+                        DayWrapper day = gson.fromJson(dayElement, DayWrapper.class);
+                        if (day.roster != null) allItems.addAll(day.roster);
                     }
+                    callback.onSuccess(allItems);
                 } else {
-                    String errorMsg = "Fehler " + response.code() + ": " + response.message();
-                    Log.e(TAG, errorMsg);
-                    callback.onError(errorMsg);
+                    handleListResponse(response, new TypeToken<List<RosterItem>>() {
+                    }.getType(), callback);
                 }
             }
 
             @Override
             public void onFailure(Call<JsonElement> call, Throwable t) {
-                Log.e(TAG, "Netzwerkfehler in fetchRoster", t);
-                callback.onError("Netzwerkfehler: " + t.getMessage());
+                callback.onError(t.getMessage());
             }
         });
     }
 
     public void fetchEmployees(String token, NetworkResponseCallback<List<Employee>> callback) {
         Log.i(TAG, "fetchEmployees() gestartet");
-        Call<List<Employee>> call = rosterApi.getEmployees("Bearer " + token);
-        call.enqueue(new Callback<List<Employee>>() {
+        rosterApi.getEmployees("Bearer " + token).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<List<Employee>> call, Response<List<Employee>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Log.i(TAG, "Mitarbeiter erfolgreich geladen: " + response.body().size());
-                    callback.onSuccess(response.body());
-                } else {
-                    Log.e(TAG, "Fehler Mitarbeiter: " + response.code());
-                    callback.onError("Fehler beim Abrufen der Mitarbeiter: " + response.code());
-                }
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Employee>>() {
+                }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<List<Employee>> call, Throwable t) {
-                Log.e(TAG, "Netzwerkfehler Mitarbeiter", t);
-                callback.onError("Netzwerkfehler bei fetchEmployees: " + t.getMessage());
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
             }
         });
     }
 
     public void fetchBranches(String token, NetworkResponseCallback<List<Branch>> callback) {
         Log.i(TAG, "fetchBranches() gestartet");
-        Call<List<Branch>> call = rosterApi.getBranches("Bearer " + token);
-        call.enqueue(new Callback<List<Branch>>() {
+        rosterApi.getBranches("Bearer " + token).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<List<Branch>> call, Response<List<Branch>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Log.i(TAG, "Filialen erfolgreich geladen: " + response.body().size());
-                    Log.i(TAG, "Daten: " + response.body().toString());
-                    callback.onSuccess(response.body());
-                } else {
-                    Log.e(TAG, "Fehler Filialen: " + response.code() + " " + response.message());
-                    callback.onError("Fehler beim Abrufen der Filialen: " + response.code());
-                }
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Branch>>() {
+                }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<List<Branch>> call, Throwable t) {
-                Log.e(TAG, "Netzwerkfehler Filialen", t);
-                callback.onError("Netzwerkfehler bei fetchBranches: " + t.getMessage());
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
             }
         });
     }
 
     public void fetchBranchById(String token, int branchId, NetworkResponseCallback<Branch> callback) {
         Log.i(TAG, "fetchBranchById() gestartet für ID: " + branchId);
-        Call<Branch> call = rosterApi.getBranchById("Bearer " + token, branchId);
-        call.enqueue(new Callback<Branch>() {
+        rosterApi.getBranchById("Bearer " + token, branchId).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<Branch> call, Response<Branch> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    callback.onSuccess(response.body());
-                } else {
-                    callback.onError("Fehler beim Abrufen der Filiale " + branchId + ": " + response.code());
-                }
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleSingleResponse(response, Branch.class, callback);
             }
 
             @Override
-            public void onFailure(Call<Branch> call, Throwable t) {
-                callback.onError("Netzwerkfehler bei fetchBranchById: " + t.getMessage());
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
             }
         });
     }
 
     private interface RosterApi {
         @GET("rosters")
-        Call<JsonElement> getRoster(
-                @Header("Authorization") String authorization,
-                @Query("dateStart") String dateStart,
-                @Query("dateEnd") String dateEnd,
-                @Query("employeeKey") Integer employeeKey
-        );
+        Call<JsonElement> getRoster(@Header("Authorization") String auth, @Query("dateStart") String s, @Query("dateEnd") String e, @Query("employeeKey") Integer ek, @Query("branchId") Integer bi);
 
         @GET("employees")
-        Call<List<Employee>> getEmployees(@Header("Authorization") String authorization);
+        Call<JsonElement> getEmployees(@Header("Authorization") String auth);
 
         @GET("branches")
-        Call<List<Branch>> getBranches(@Header("Authorization") String authorization);
+        Call<JsonElement> getBranches(@Header("Authorization") String auth);
 
         @GET("branches/{id}")
-        Call<Branch> getBranchById(
-                @Header("Authorization") String authorization,
-                @Path("id") int branchId
-        );
+        Call<JsonElement> getBranchById(@Header("Authorization") String authorization, @Path("id") int branchId);
     }
 
     public interface NetworkResponseCallback<T> {

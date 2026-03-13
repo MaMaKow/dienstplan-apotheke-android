@@ -27,6 +27,15 @@ public class BranchRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
+    private void handleNetworkError(String errorMessage) {
+        Log.e(TAG, "Network error: " + errorMessage);
+        if (errorMessage != null && (errorMessage.contains("Invalid token") || errorMessage.contains("Token expired"))) {
+            Log.i(TAG, "Token issue detected. Triggering re-login.");
+            sessionManager.logout();
+            sessionManager.performLogin();
+        }
+    }
+
     public LiveData<List<Branch>> getAllBranches() {
         return branchDao.getAllBranches();
     }
@@ -39,6 +48,7 @@ public class BranchRepository {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null, cannot fetch branches.");
+            sessionManager.performLogin();
             return;
         }
 
@@ -54,7 +64,7 @@ public class BranchRepository {
 
             @Override
             public void onError(String errorMessage) {
-                Log.e(TAG, "Error fetching branches: " + errorMessage);
+                handleNetworkError(errorMessage);
             }
         });
     }
@@ -63,6 +73,7 @@ public class BranchRepository {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null, cannot fetch branch.");
+            sessionManager.performLogin();
             return;
         }
 
@@ -77,7 +88,7 @@ public class BranchRepository {
 
             @Override
             public void onError(String errorMessage) {
-                Log.e(TAG, "Error fetching branch " + branchId + ": " + errorMessage);
+                handleNetworkError(errorMessage);
             }
         });
     }
