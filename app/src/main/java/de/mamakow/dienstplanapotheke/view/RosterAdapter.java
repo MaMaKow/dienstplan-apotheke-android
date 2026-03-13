@@ -91,30 +91,47 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
             layoutRosterItems.removeAllViews();
 
             for (RosterItem item : rosterDay.getRosterItems()) {
-                View subItemView = LayoutInflater.from(itemView.getContext()).inflate(android.R.layout.simple_list_item_2, layoutRosterItems, false);
-                TextView text1 = subItemView.findViewById(android.R.id.text1);
-                TextView text2 = subItemView.findViewById(android.R.id.text2);
+                View subItemView = LayoutInflater.from(itemView.getContext()).inflate(R.layout.item_roster_shift, layoutRosterItems, false);
 
+                TextView textViewEmployeeName = subItemView.findViewById(R.id.textViewEmployeeName);
+                TextView textViewShiftTime = subItemView.findViewById(R.id.textViewShiftTime);
+                TextView textViewBranch = subItemView.findViewById(R.id.textViewBranch);
+                TextView textViewPause = subItemView.findViewById(R.id.textViewPause);
+                TextView textViewComment = subItemView.findViewById(R.id.textViewComment);
+
+                // Mitarbeiter-Name
                 Employee employee = employeeMap.get(item.getEmployeeKey());
                 String name = (employee != null) ? employee.getEmployeeFullName() : "Unbekannt (" + item.getEmployeeKey() + ")";
+                textViewEmployeeName.setText(name);
 
-                text1.setText(name);
+                // Schichtzeit
+                String shiftTime = item.getDutyStartDateTime().format(timeFormatter) + " - " + item.getDutyEndDateTime().format(timeFormatter);
+                textViewShiftTime.setText(shiftTime);
 
-                String detailedInformation = item.getDutyStartDateTime().format(timeFormatter) + " - " + item.getDutyEndDateTime().format(timeFormatter);
-                if (item.getBreakStartDateTime() != null && item.getBreakEndDateTime() != null) {
-                    detailedInformation += "\nPause: " + item.getBreakStartDateTime().format(timeFormatter) + " - " + item.getBreakEndDateTime().format(timeFormatter);
-                }
-                if (item.getComment() != null && !item.getComment().isEmpty()) {
-                    detailedInformation += "\n(" + item.getComment() + ")";
-                }
-
+                // Filiale
                 int branchId = item.getBranchId();
                 Branch branch = branchMap.get(branchId);
                 String branchName = (branch != null) ? branch.getBranchName() : "Unbekannt (" + branchId + ")";
-                detailedInformation += "\nFiliale: " + branchName;
-                text2.setText(detailedInformation);
+                textViewBranch.setText("Filiale: " + branchName);
 
-                layoutRosterItems.addView(subItemView, layoutRosterItems.getChildCount());
+                // Pause (falls vorhanden)
+                if (item.getBreakStartDateTime() != null && item.getBreakEndDateTime() != null) {
+                    String pauseText = "Pause: " + item.getBreakStartDateTime().format(timeFormatter) + " - " + item.getBreakEndDateTime().format(timeFormatter);
+                    textViewPause.setText(pauseText);
+                    textViewPause.setVisibility(View.VISIBLE);
+                } else {
+                    textViewPause.setVisibility(View.GONE);
+                }
+
+                // Kommentar (falls vorhanden)
+                if (item.getComment() != null && !item.getComment().isEmpty()) {
+                    textViewComment.setText(item.getComment());
+                    textViewComment.setVisibility(View.VISIBLE);
+                } else {
+                    textViewComment.setVisibility(View.GONE);
+                }
+
+                layoutRosterItems.addView(subItemView);
             }
         }
     }
