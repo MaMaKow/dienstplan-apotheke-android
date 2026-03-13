@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -38,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private View filterLayout;
     private RadioGroup viewModeRadioGroup;
     private Button buttonDatePicker;
+    private ImageButton buttonPrevDate;
+    private ImageButton buttonNextDate;
     private Spinner branchSpinner;
     private TextView currentSelectionTextView;
     private LocalDate selectedDate;
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         setupListeners();
 
         // Stammdaten und initialen Roster laden
+        updateUI();
         refreshRosterOnly();
     }
 
@@ -68,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
         filterLayout = findViewById(R.id.filterLayout);
         viewModeRadioGroup = findViewById(R.id.viewModeRadioGroup);
         buttonDatePicker = findViewById(R.id.buttonDatePicker);
+        buttonPrevDate = findViewById(R.id.buttonPrevDate);
+        buttonNextDate = findViewById(R.id.buttonNextDate);
         branchSpinner = findViewById(R.id.branchSpinner);
         currentSelectionTextView = findViewById(R.id.currentSelectionTextView);
     }
@@ -130,6 +136,26 @@ public class MainActivity extends AppCompatActivity {
             datePicker.show();
         });
 
+        buttonPrevDate.setOnClickListener(v -> {
+            if (isBranchView) {
+                selectedDate = selectedDate.minusDays(1);
+            } else {
+                selectedDate = selectedDate.minusWeeks(1);
+            }
+            updateUI();
+            refreshRosterOnly();
+        });
+
+        buttonNextDate.setOnClickListener(v -> {
+            if (isBranchView) {
+                selectedDate = selectedDate.plusDays(1);
+            } else {
+                selectedDate = selectedDate.plusWeeks(1);
+            }
+            updateUI();
+            refreshRosterOnly();
+        });
+
         branchSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -181,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
             LocalDate monday = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             LocalDate sunday = monday.plusDays(6);
             currentSelectionTextView.setText("Wochenansicht Mitarbeiter: " + monday.format(dateFormatter) + " - " + sunday.format(dateFormatter));
-            buttonDatePicker.setText("Woche wählen");
+            buttonDatePicker.setText("Woche vom " + monday.format(dateFormatter));
         }
     }
 

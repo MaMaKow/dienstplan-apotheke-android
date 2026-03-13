@@ -38,6 +38,38 @@
         </RadioGroup>
 
         <LinearLayout
+            android:id="@+id/navigationLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/buttonPrevDate"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Vorheriges Datum"
+                android:src="@android:drawable/ic_media_previous" />
+
+            <Button
+                android:id="@+id/buttonDatePicker"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Datum wählen" />
+
+            <ImageButton
+                android:id="@+id/buttonNextDate"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Nächstes Datum"
+                android:src="@android:drawable/ic_media_next" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/filterLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -45,17 +77,10 @@
             android:orientation="horizontal"
             android:visibility="gone">
 
-            <Button
-                android:id="@+id/buttonDatePicker"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Datum wählen" />
-
             <Spinner
                 android:id="@+id/branchSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone" />
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <TextView
