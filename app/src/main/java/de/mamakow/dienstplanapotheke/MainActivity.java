@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -133,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
                 updateUI();
                 refreshRosterOnly();
             }, selectedDate.getYear(), selectedDate.getMonthValue() - 1, selectedDate.getDayOfMonth());
+            datePicker.getDatePicker().setFirstDayOfWeek(Calendar.MONDAY);
             datePicker.show();
         });
 
