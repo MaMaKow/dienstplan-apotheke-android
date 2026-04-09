@@ -3,11 +3,14 @@ package de.mamakow.dienstplanapotheke.view;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.card.MaterialCardView;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -130,7 +133,33 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
                 } else {
                     textViewComment.setVisibility(View.GONE);
                 }
+                MaterialCardView cardView = (MaterialCardView) subItemView;
+                ImageView imageViewProfession = subItemView.findViewById(R.id.imageViewProfession);
 
+                if (employee != null) {
+                    String profession = employee.getEmployeeProfession();
+                    int iconResId;
+                    int backgroundColor = android.graphics.Color.WHITE; // Standard
+
+                    if ("Apotheker".equalsIgnoreCase(profession)) {
+                        iconResId = R.drawable.outline_admin_meds_24;
+                        backgroundColor = itemView.getContext().getColor(R.color.highlight_pharmacist);
+                        cardView.setStrokeWidth(4); // Stärkere Umrandung
+                    } else if ("Pharmazieingenieur".equalsIgnoreCase(profession)) {
+                        iconResId = R.drawable.baseline_local_pharmacy_24;
+                        backgroundColor = itemView.getContext().getColor(R.color.highlight_engineer);
+                        cardView.setStrokeWidth(4);
+                    } else if ("PTA".equalsIgnoreCase(profession)) {
+                        iconResId = R.drawable.outline_medication_24;
+                        cardView.setStrokeWidth(1);
+                    } else {
+                        iconResId = R.drawable.baseline_more_horiz_24;
+                        cardView.setStrokeWidth(1);
+                    }
+
+                    imageViewProfession.setImageResource(iconResId);
+                    cardView.setCardBackgroundColor(backgroundColor);
+                }
                 layoutRosterItems.addView(subItemView);
             }
         }

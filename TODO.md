@@ -20,18 +20,17 @@
 
 - [ ] **Material Button Toggle Group**: Ersetzen der RadioButtons durch moderne Toggle-Buttons für
   die Sicht-Umschaltung.
-- [ ] **Chips**: Erwägen von `Chips` für die Filialauswahl bei wenigen Filialen.
 
 ## 5. Datumsnavigation
 
-- [ ] **Pfeil-Buttons**: `<` und `>` Buttons neben dem Datum, um schnell einen Tag vor oder zurück
+- [x] **Pfeil-Buttons**: `<` und `>` Buttons neben dem Datum, um schnell einen Tag vor oder zurück
   zu springen.
 
 ## 6. Listendesign (RosterAdapter)
 
 - [x] **Material Cards**: Jeden Dienst in einer `CardView` darstellen.
 - [ ] **Farbkodierung**: Akzentfarben je nach Filiale oder Status des Dienstes.
-- [ ] **Icons**: Icons für Berufe (Apotheker, PTA, etc.) und Pausenzeiten zur besseren Scanbarkeit.
+- [x] **Icons**: Icons für Berufe (Apotheker, PTA, etc.) und Pausenzeiten zur besseren Scanbarkeit.
 
 ## 7. Filter für Wochenansicht
 

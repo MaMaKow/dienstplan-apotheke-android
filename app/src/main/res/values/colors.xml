@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="highlight_pharmacist">#E3F2FD</color> <!-- Hellblau -->
+    <color name="highlight_engineer">#F1F8E9</color>   <!-- Hellgrün -->
+    <color name="profession_icon_tint">#555555</color>
 </resources>
