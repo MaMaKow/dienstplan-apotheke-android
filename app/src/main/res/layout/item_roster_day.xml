@@ -17,7 +17,7 @@
             android:id="@+id/textViewDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Montag, 01.01.2024"
+            android:text=""
             android:textSize="18sp"
             android:textStyle="bold" />
 

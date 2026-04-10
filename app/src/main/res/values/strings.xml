@@ -5,4 +5,15 @@
     <string name="api_base_url" translatable="false">
         https://martin-mandelkow.de/development/testing/dienstplan-test/src/php/restful-api/
     </string>
+    <string name="wochenansicht_mitarbeiter">"Wochenansicht Mitarbeiter: "</string>
+    <string name="tagesansicht">"Tagesansicht: "</string>
+    <string name="woche_vom">"Woche vom "</string>
+    <string name="mitarbeiter_ansicht">Mitarbeiter-Ansicht</string>
+    <string name="filial_ansicht">Filial-Ansicht</string>
+    <string name="vorheriges_datum">Vorheriges Datum</string>
+    <string name="datum_waehlen">Datum wählen</string>
+    <string name="naechstes_datum">Nächstes Datum</string>
+    <string name="wochenansicht_fuer_mitarbeiter">Wochenansicht für Mitarbeiter</string>
+    <string name="employee_profession_icon">Mitarbeiter Berufsicon</string>
+    <string name="mitarbeiter_name">Mitarbeiter Name</string>
 </resources>

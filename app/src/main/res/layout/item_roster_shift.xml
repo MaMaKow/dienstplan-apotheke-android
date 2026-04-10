@@ -24,7 +24,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:text="Mitarbeiter Name"
+                android:layout_toStartOf="@id/textViewShiftTime"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/mitarbeiter_name"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -35,7 +38,9 @@
                 android:layout_height="20dp"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="8dp"
+                android:layout_toStartOf="@id/textViewShiftTime"
                 android:layout_toEndOf="@id/textViewEmployeeName"
+                android:contentDescription="@string/employee_profession_icon"
                 app:tint="@color/profession_icon_tint" />
 
             <TextView
@@ -43,12 +48,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:text="08:00 - 18:00"
+                android:layout_centerVertical="true"
+                android:text=""
                 android:textColor="?attr/colorPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </RelativeLayout>
 
+        <!-- rest unchanged -->
         <TextView
             android:id="@+id/textViewBranch"
             android:layout_width="match_parent"
@@ -74,7 +81,7 @@
             android:layout_marginTop="4dp"
             android:background="#F5F5F5"
             android:padding="4dp"
-            android:text="Kommentar hier"
+            android:text="Kommentar"
             android:textSize="12sp"
             android:textStyle="italic"
             android:visibility="gone" />
