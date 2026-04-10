@@ -27,14 +27,14 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
-                android:text="Mitarbeiter-Sicht" />
+                android:text="@string/mitarbeiter_ansicht" />
 
             <RadioButton
                 android:id="@+id/radioBranchView"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Filial-Sicht" />
+                android:text="@string/filial_ansicht" />
         </RadioGroup>
 
         <LinearLayout
@@ -49,8 +49,9 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Vorheriges Datum"
-                android:src="@android:drawable/ic_media_previous" />
+                android:contentDescription="@string/vorheriges_datum"
+                android:src="@android:drawable/ic_media_previous"
+                app:tint="?attr/colorOnSurface" />
 
             <Button
                 android:id="@+id/buttonDatePicker"
@@ -58,15 +59,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Datum wählen" />
+                android:text="@string/datum_waehlen" />
 
             <ImageButton
                 android:id="@+id/buttonNextDate"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Nächstes Datum"
-                android:src="@android:drawable/ic_media_next" />
+                android:contentDescription="@string/naechstes_datum"
+                android:src="@android:drawable/ic_media_next"
+                app:tint="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -74,13 +76,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:visibility="gone">
+            android:orientation="horizontal">
 
             <Spinner
                 android:id="@+id/branchSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
+            <Spinner
+                android:id="@+id/employeeSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView
@@ -88,7 +96,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="4dp"
-            android:text="Wochenansicht für Mitarbeiter"
+            android:text="@string/wochenansicht_fuer_mitarbeiter"
             android:textStyle="bold" />
     </LinearLayout>
 

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 
 import de.mamakow.dienstplanapotheke.model.Branch;
+import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import de.mamakow.dienstplanapotheke.view.RosterAdapter;
 import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
@@ -37,16 +38,21 @@ public class MainActivity extends AppCompatActivity {
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMAN);
     private MainViewModel viewModel;
     private RosterAdapter adapter;
-    private View filterLayout;
     private RadioGroup viewModeRadioGroup;
     private Button buttonDatePicker;
     private ImageButton buttonPrevDate;
     private ImageButton buttonNextDate;
     private Spinner branchSpinner;
+    private Spinner employeeSpinner;
+
     private TextView currentSelectionTextView;
     private LocalDate selectedDate;
     private Branch selectedBranch;
+    private Employee selectedEmployee;
+
     private List<Branch> allBranches = new ArrayList<>();
+    private List<Employee> employees = new ArrayList<>();
+
     private boolean isBranchView = false;
 
     @Override
@@ -70,12 +76,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        filterLayout = findViewById(R.id.filterLayout);
         viewModeRadioGroup = findViewById(R.id.viewModeRadioGroup);
         buttonDatePicker = findViewById(R.id.buttonDatePicker);
         buttonPrevDate = findViewById(R.id.buttonPrevDate);
         buttonNextDate = findViewById(R.id.buttonNextDate);
         branchSpinner = findViewById(R.id.branchSpinner);
+        employeeSpinner = findViewById(R.id.employeeSpinner);
         currentSelectionTextView = findViewById(R.id.currentSelectionTextView);
     }
 
@@ -98,7 +104,9 @@ public class MainActivity extends AppCompatActivity {
 
         viewModel.getEmployees().observe(this, employees -> {
             if (employees != null) {
+                this.employees = employees;
                 adapter.setEmployees(employees);
+                updateEmployeeSpinner();
             }
         });
 
@@ -123,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
     private void setupListeners() {
         viewModeRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
             isBranchView = (checkedId == R.id.radioBranchView);
-            filterLayout.setVisibility(isBranchView ? View.VISIBLE : View.GONE);
             updateUI();
             refreshRosterOnly();
         });
@@ -173,6 +180,21 @@ public class MainActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+        employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Employee newSelection = employees.get(position);
+                if (selectedEmployee == null || selectedEmployee.getEmployeeKey() != newSelection.getEmployeeKey()) {
+                    selectedEmployee = newSelection;
+                    updateUI();
+                    refreshRosterOnly();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void updateBranchSpinner() {
@@ -193,23 +215,47 @@ public class MainActivity extends AppCompatActivity {
         branchSpinner.setAdapter(spinnerAdapter);
         branchSpinner.setSelection(selectedIndex);
 
-        branchSpinner.setVisibility(allBranches.size() > 1 ? View.VISIBLE : View.GONE);
-
         if (selectedBranch == null) {
             selectedBranch = allBranches.get(0);
         }
     }
 
+    private void updateEmployeeSpinner() {
+        if (employees.isEmpty()) return;
+
+        int selectedIndex = 0;
+        List<String> employeeNames = new ArrayList<>();
+        for (int i = 0; i < employees.size(); i++) {
+            Employee employee = employees.get(i);
+            employeeNames.add(employee.getEmployeeFullName());
+            if (selectedEmployee != null && employee.getEmployeeKey() == selectedEmployee.getEmployeeKey()) {
+                selectedIndex = i;
+            }
+        }
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, employeeNames);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        employeeSpinner.setAdapter(spinnerAdapter);
+        employeeSpinner.setSelection(selectedIndex);
+
+        if (selectedEmployee == null) {
+            selectedEmployee = employees.get(0);
+        }
+    }
+
     private void updateUI() {
         if (isBranchView) {
-            String branchName = (selectedBranch != null) ? selectedBranch.getBranchName() : "...";
-            currentSelectionTextView.setText("Tagesansicht: " + selectedDate.format(dateFormatter) + " - " + branchName);
+            currentSelectionTextView.setText(String.format("%s%s", getString(R.string.tagesansicht), selectedDate.format(dateFormatter)));
             buttonDatePicker.setText(selectedDate.format(dateFormatter));
+            branchSpinner.setVisibility(View.VISIBLE);
+            employeeSpinner.setVisibility(View.GONE);
         } else {
             LocalDate monday = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             LocalDate sunday = monday.plusDays(6);
-            currentSelectionTextView.setText("Wochenansicht Mitarbeiter: " + monday.format(dateFormatter) + " - " + sunday.format(dateFormatter));
-            buttonDatePicker.setText("Woche vom " + monday.format(dateFormatter));
+            currentSelectionTextView.setText(String.format("%s%s - %s", getString(R.string.wochenansicht_mitarbeiter), monday.format(dateFormatter), sunday.format(dateFormatter)));
+            buttonDatePicker.setText(String.format("%s%s", getString(R.string.woche_vom), monday.format(dateFormatter)));
+            branchSpinner.setVisibility(View.GONE);
+            employeeSpinner.setVisibility(View.VISIBLE);
         }
     }
 
@@ -225,10 +271,10 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startDate = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             endDate = startDate.plusDays(6);
-            employeeKey = 7;
+            employeeKey = (selectedEmployee != null) ? selectedEmployee.getEmployeeKey() : null;
         }
 
-        Log.i(TAG, "Refresh Roster: " + startDate + " bis " + endDate + " (Branch: " + branchId + ")");
+        Log.i(TAG, "Refresh Roster: " + startDate + " bis " + endDate + " (Branch: " + branchId + ", Employee: " + employeeKey + ")");
         viewModel.refreshData(startDate, endDate, employeeKey, branchId);
     }
 }

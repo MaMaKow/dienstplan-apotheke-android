@@ -34,5 +34,5 @@
 
 ## 7. Filter für Wochenansicht
 
-- [ ] **Mitarbeiter-Auswahl**: Spinner zur Auswahl des Mitarbeiters in der Wochenansicht (aktuell
+- [x] **Mitarbeiter-Auswahl**: Spinner zur Auswahl des Mitarbeiters in der Wochenansicht (aktuell
   fest auf ID 7).
