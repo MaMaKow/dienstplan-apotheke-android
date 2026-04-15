@@ -29,6 +29,7 @@ import java.util.Locale;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
+import de.mamakow.dienstplanapotheke.view.AbsenceAdapter;
 import de.mamakow.dienstplanapotheke.view.RosterAdapter;
 import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
@@ -37,7 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMAN);
     private MainViewModel viewModel;
-    private RosterAdapter adapter;
+    private RecyclerView recyclerView;
+    private RosterAdapter rosterAdapter;
+    private AbsenceAdapter absenceAdapter;
     private RadioGroup viewModeRadioGroup;
     private Button buttonDatePicker;
     private ImageButton buttonPrevDate;
@@ -52,8 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Branch> allBranches = new ArrayList<>();
     private List<Employee> employees = new ArrayList<>();
-
-    private boolean isBranchView = false;
+    private ViewMode currentViewMode = ViewMode.EMPLOYEE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Stammdaten und initialen Roster laden
         updateUI();
-        refreshRosterOnly();
+        refreshData();
     }
 
     private void initViews() {
@@ -83,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         branchSpinner = findViewById(R.id.branchSpinner);
         employeeSpinner = findViewById(R.id.employeeSpinner);
         currentSelectionTextView = findViewById(R.id.currentSelectionTextView);
+        recyclerView = findViewById(R.id.recyclerViewRoster);
     }
 
     private void setupSession() {
@@ -93,10 +96,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewRoster);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new RosterAdapter();
-        recyclerView.setAdapter(adapter);
+        rosterAdapter = new RosterAdapter();
+        absenceAdapter = new AbsenceAdapter();
+        recyclerView.setAdapter(rosterAdapter);
     }
 
     private void setupViewModel() {
@@ -105,64 +108,90 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getEmployees().observe(this, employees -> {
             if (employees != null) {
                 this.employees = employees;
-                adapter.setEmployees(employees);
+                rosterAdapter.setEmployees(employees);
                 updateEmployeeSpinner();
+                if (currentViewMode == ViewMode.ABSENCE) {
+                    observeAbsences();
+                }
             }
         });
 
         viewModel.getBranches().observe(this, branches -> {
             if (branches != null && !branches.equals(allBranches)) {
                 this.allBranches = branches;
-                adapter.setBranches(branches);
+                rosterAdapter.setBranches(branches);
                 updateBranchSpinner();
             }
         });
 
-        // WICHTIG: Wir nutzen jetzt getRoster() ohne Filter, 
-        // da die Repository-DB-Abfrage gefixt wurde.
         viewModel.getRoster().observe(this, roster -> {
-            if (roster != null) {
+            if (roster != null && currentViewMode != ViewMode.ABSENCE) {
                 Log.d(TAG, "Dienstplan-Update: " + roster.getRosterDays().size() + " Tage angezeigt.");
-                adapter.setRosterDays(roster.getRosterDays());
+                rosterAdapter.setRosterDays(roster.getRosterDays());
             }
         });
     }
 
+    private void observeAbsences() {
+        if (selectedEmployee != null) {
+            viewModel.getAbsencesForEmployeeAndYear(selectedEmployee.getEmployeeKey(), selectedDate.getYear())
+                    .observe(this, absences -> {
+                        if (currentViewMode == ViewMode.ABSENCE && absences != null) {
+                            absenceAdapter.setAbsences(absences);
+                        }
+                    });
+        }
+    }
+
     private void setupListeners() {
         viewModeRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            isBranchView = (checkedId == R.id.radioBranchView);
+            if (checkedId == R.id.radioBranchView) {
+                currentViewMode = ViewMode.BRANCH;
+                recyclerView.setAdapter(rosterAdapter);
+            } else if (checkedId == R.id.radioAbsenceView) {
+                currentViewMode = ViewMode.ABSENCE;
+                recyclerView.setAdapter(absenceAdapter);
+                observeAbsences();
+            } else {
+                currentViewMode = ViewMode.EMPLOYEE;
+                recyclerView.setAdapter(rosterAdapter);
+            }
             updateUI();
-            refreshRosterOnly();
+            refreshData();
         });
 
         buttonDatePicker.setOnClickListener(v -> {
             DatePickerDialog datePicker = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
                 selectedDate = LocalDate.of(year, month + 1, dayOfMonth);
                 updateUI();
-                refreshRosterOnly();
+                refreshData();
             }, selectedDate.getYear(), selectedDate.getMonthValue() - 1, selectedDate.getDayOfMonth());
             datePicker.getDatePicker().setFirstDayOfWeek(Calendar.MONDAY);
             datePicker.show();
         });
 
         buttonPrevDate.setOnClickListener(v -> {
-            if (isBranchView) {
+            if (currentViewMode == ViewMode.BRANCH) {
                 selectedDate = selectedDate.minusDays(1);
+            } else if (currentViewMode == ViewMode.ABSENCE) {
+                selectedDate = selectedDate.minusYears(1);
             } else {
                 selectedDate = selectedDate.minusWeeks(1);
             }
             updateUI();
-            refreshRosterOnly();
+            refreshData();
         });
 
         buttonNextDate.setOnClickListener(v -> {
-            if (isBranchView) {
+            if (currentViewMode == ViewMode.BRANCH) {
                 selectedDate = selectedDate.plusDays(1);
+            } else if (currentViewMode == ViewMode.ABSENCE) {
+                selectedDate = selectedDate.plusYears(1);
             } else {
                 selectedDate = selectedDate.plusWeeks(1);
             }
             updateUI();
-            refreshRosterOnly();
+            refreshData();
         });
 
         branchSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -172,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
                 if (selectedBranch == null || selectedBranch.getBranchId() != newSelection.getBranchId()) {
                     selectedBranch = newSelection;
                     updateUI();
-                    refreshRosterOnly();
+                    refreshData();
                 }
             }
 
@@ -187,7 +216,10 @@ public class MainActivity extends AppCompatActivity {
                 if (selectedEmployee == null || selectedEmployee.getEmployeeKey() != newSelection.getEmployeeKey()) {
                     selectedEmployee = newSelection;
                     updateUI();
-                    refreshRosterOnly();
+                    if (currentViewMode == ViewMode.ABSENCE) {
+                        observeAbsences();
+                    }
+                    refreshData();
                 }
             }
 
@@ -244,11 +276,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI() {
-        if (isBranchView) {
+        if (currentViewMode == ViewMode.BRANCH) {
             currentSelectionTextView.setText(String.format("%s%s", getString(R.string.tagesansicht), selectedDate.format(dateFormatter)));
             buttonDatePicker.setText(selectedDate.format(dateFormatter));
             branchSpinner.setVisibility(View.VISIBLE);
             employeeSpinner.setVisibility(View.GONE);
+        } else if (currentViewMode == ViewMode.ABSENCE) {
+            currentSelectionTextView.setText(String.format("%s %d", getString(R.string.jahresansicht_abwesenheiten), selectedDate.getYear()));
+            buttonDatePicker.setText(String.valueOf(selectedDate.getYear()));
+            branchSpinner.setVisibility(View.GONE);
+            employeeSpinner.setVisibility(View.VISIBLE);
         } else {
             LocalDate monday = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             LocalDate sunday = monday.plusDays(6);
@@ -259,22 +296,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void refreshRosterOnly() {
+    private void refreshData() {
         LocalDate startDate, endDate;
         Integer employeeKey = null;
         Integer branchId = null;
 
-        if (isBranchView) {
+        if (currentViewMode == ViewMode.BRANCH) {
             startDate = selectedDate;
             endDate = selectedDate;
             branchId = (selectedBranch != null) ? selectedBranch.getBranchId() : null;
+        } else if (currentViewMode == ViewMode.ABSENCE) {
+            startDate = LocalDate.of(selectedDate.getYear(), 1, 1);
+            endDate = LocalDate.of(selectedDate.getYear(), 12, 31);
+            employeeKey = (selectedEmployee != null) ? selectedEmployee.getEmployeeKey() : null;
         } else {
             startDate = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             endDate = startDate.plusDays(6);
             employeeKey = (selectedEmployee != null) ? selectedEmployee.getEmployeeKey() : null;
         }
 
-        Log.i(TAG, "Refresh Roster: " + startDate + " bis " + endDate + " (Branch: " + branchId + ", Employee: " + employeeKey + ")");
+        Log.i(TAG, "Refresh Data: " + startDate + " bis " + endDate + " (Branch: " + branchId + ", Employee: " + employeeKey + ")");
         viewModel.refreshData(startDate, endDate, employeeKey, branchId);
+    }
+
+    private enum ViewMode {
+        BRANCH, EMPLOYEE, ABSENCE
     }
 }

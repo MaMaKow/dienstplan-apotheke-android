@@ -10,10 +10,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 import de.mamakow.dienstplanapotheke.database.AppDatabase;
+import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.Roster;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
+import de.mamakow.dienstplanapotheke.repository.AbsenceRepository;
 import de.mamakow.dienstplanapotheke.repository.BranchRepository;
 import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
 import de.mamakow.dienstplanapotheke.repository.RosterRepository;
@@ -23,6 +25,7 @@ public class MainViewModel extends AndroidViewModel {
     private final RosterRepository rosterRepository;
     private final EmployeeRepository employeeRepository;
     private final BranchRepository branchRepository;
+    private final AbsenceRepository absenceRepository;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -33,6 +36,7 @@ public class MainViewModel extends AndroidViewModel {
         rosterRepository = new RosterRepository(networkHandler, db.rosterDao(), sessionManager);
         employeeRepository = new EmployeeRepository(db.employeeDao(), networkHandler, sessionManager);
         branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
+        absenceRepository = new AbsenceRepository(db.absenceDao(), networkHandler, sessionManager);
     }
 
     public LiveData<Roster> getRoster() {
@@ -51,9 +55,16 @@ public class MainViewModel extends AndroidViewModel {
         return branchRepository.getAllBranches();
     }
 
+    public LiveData<List<Absence>> getAbsencesForEmployeeAndYear(int employeeKey, int year) {
+        return absenceRepository.getAbsencesByEmployeeIdAndYear(employeeKey, year);
+    }
+
     public void refreshData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {
         employeeRepository.fetchAndSaveEmployees();
         branchRepository.fetchAndSaveBranches();
         rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId);
+        if (employeeKey != null) {
+            absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey);
+        }
     }
 }

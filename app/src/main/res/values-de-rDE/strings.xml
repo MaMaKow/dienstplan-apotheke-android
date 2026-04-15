@@ -13,4 +13,6 @@
     <string name="wochenansicht_fuer_mitarbeiter">Wochenansicht für Mitarbeiter</string>
     <string name="employee_profession_icon">Mitarbeiter Berufsicon</string>
     <string name="mitarbeiter_name">Mitarbeiter Name</string>
+    <string name="abwesenheiten_ansicht">Abwesenheiten</string>
+    <string name="jahresansicht_abwesenheiten">Jahresübersicht Abwesenheiten:</string>
 </resources>

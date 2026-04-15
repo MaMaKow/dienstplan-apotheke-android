@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.mamakow.dienstplanapotheke.R;
+import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
@@ -48,15 +49,23 @@ public class RetrofitNetworkHandler {
                 .addInterceptor(logging)
                 .build();
 
+        DateTimeFormatter apiDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, typeOfT, context1) -> {
                     String val = json.getAsString();
                     if (val == null || val.isEmpty() || val.equals("null")) return null;
+                    if (val.length() > 10) {
+                        return LocalDate.parse(val, apiDateTimeFormatter);
+                    }
                     return LocalDate.parse(val, DateTimeFormatter.ISO_LOCAL_DATE);
                 })
                 .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, typeOfT, context1) -> {
                     String val = json.getAsString();
                     if (val == null || val.isEmpty() || val.equals("null")) return null;
+                    if (val.contains(" ")) {
+                        return LocalDateTime.parse(val, apiDateTimeFormatter);
+                    }
                     return LocalDateTime.parse(val, DateTimeFormatter.ISO_DATE_TIME);
                 })
                 .create();
@@ -182,6 +191,54 @@ public class RetrofitNetworkHandler {
         });
     }
 
+    public void fetchAbsences(String token, NetworkResponseCallback<List<Absence>> callback) {
+        Log.i(TAG, "fetchAbsences() gestartet");
+        rosterApi.getAllAbsences("Bearer " + token).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Absence>>() {
+                }.getType(), callback);
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
+    public void fetchAbsencesByYear(String token, int year, NetworkResponseCallback<List<Absence>> callback) {
+        Log.i(TAG, "fetchAbsencesByYear() gestartet für Jahr: " + year);
+        rosterApi.getAbsencesByYear("Bearer " + token, year).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Absence>>() {
+                }.getType(), callback);
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
+    public void fetchEmployeeAbsences(String token, int employeeKey, NetworkResponseCallback<List<Absence>> callback) {
+        Log.i(TAG, "fetchEmployeeAbsences() gestartet für Mitarbeiter: " + employeeKey);
+        rosterApi.getEmployeeAbsences("Bearer " + token, employeeKey).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Absence>>() {
+                }.getType(), callback);
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
     private interface RosterApi {
         @GET("rosters")
         Call<JsonElement> getRoster(@Header("Authorization") String auth, @Query("dateStart") String s, @Query("dateEnd") String e, @Query("employeeKey") Integer ek, @Query("branchId") Integer bi);
@@ -194,6 +251,15 @@ public class RetrofitNetworkHandler {
 
         @GET("branches/{id}")
         Call<JsonElement> getBranchById(@Header("Authorization") String authorization, @Path("id") int branchId);
+
+        @GET("absences")
+        Call<JsonElement> getAllAbsences(@Header("Authorization") String auth);
+
+        @GET("absences/{year}")
+        Call<JsonElement> getAbsencesByYear(@Header("Authorization") String auth, @Path("year") int year);
+
+        @GET("employees/{id}/absences")
+        Call<JsonElement> getEmployeeAbsences(@Header("Authorization") String auth, @Path("id") int employeeKey);
     }
 
     public interface NetworkResponseCallback<T> {
