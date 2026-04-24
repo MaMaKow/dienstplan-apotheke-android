@@ -32,7 +32,10 @@ public class Absence {
 
     @SerializedName("reasonId")
     @ColumnInfo(name = "absence_type")
-    private String absenceType;
+    private int absenceType;
+    @SerializedName("reasonString")
+    @ColumnInfo(name = "absence_type_string")
+    private String absenceTypeString;
 
     @SerializedName("comment")
     @ColumnInfo(name = "comment")
@@ -81,12 +84,20 @@ public class Absence {
         this.endDate = endDate;
     }
 
-    public String getAbsenceType() {
+    public int getAbsenceType() {
         return absenceType;
     }
 
-    public void setAbsenceType(String absenceType) {
+    public void setAbsenceType(int absenceType) {
         this.absenceType = absenceType;
+    }
+
+    public String getAbsenceTypeString() {
+        return absenceTypeString;
+    }
+
+    public void setAbsenceTypeString(String absenceTypeString) {
+        this.absenceTypeString = absenceTypeString;
     }
 
     public String getComment() {

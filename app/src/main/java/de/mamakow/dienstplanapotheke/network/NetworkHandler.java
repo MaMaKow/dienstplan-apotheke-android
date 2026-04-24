@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -24,15 +23,16 @@ import okhttp3.ResponseBody;
 public class NetworkHandler {
     private final SessionManager sessionManager;
     private final OkHttpClient client;
-    private final String restBaseUrl;
     private final String TAG = this.getClass().getName();
 
     // Constructor to initialize OkHttpClient and SessionManager
     public NetworkHandler(Context context, SessionManager sessionManager) {
         client = new OkHttpClient();
         this.sessionManager = sessionManager;
-        String pdrBaseUrl = context.getString(R.string.test_page_url);
-        restBaseUrl = pdrBaseUrl + "src/php/restful-api/";
+    }
+
+    private String getRestBaseUrl() {
+        return sessionManager.getApiBaseUrl();
     }
 
     // Method to perform a GET request
@@ -47,7 +47,7 @@ public class NetworkHandler {
 
         // GET to receive roster data
         Request get = new Request.Builder()
-                .url(restBaseUrl + "roster/GET-roster.php")
+                .url(getRestBaseUrl() + "roster/GET-roster.php")
                 .addHeader("Authorization", "Bearer " + token)
                 .build();
 
@@ -90,7 +90,7 @@ public class NetworkHandler {
         final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
         RequestBody postBody = RequestBody.create(postData.toString(), JSON);
         Request post = new Request.Builder()
-                .url(restBaseUrl + "authentication/POST-authenticate.php")
+                .url(getRestBaseUrl() + "authentication/POST-authenticate.php")
                 .post(postBody)
                 .build();
 

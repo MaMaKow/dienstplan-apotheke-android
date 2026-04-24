@@ -88,6 +88,10 @@ public class AbsenceRepository {
         return absenceDao.getAllAbsencesLiveData();
     }
 
+    public LiveData<List<Absence>> getAllAbsencesByYearLiveData(int year) {
+        return absenceDao.getAllAbsencesByYearLiveData(String.valueOf(year));
+    }
+
     public LiveData<List<Absence>> getAbsencesByEmployeeId(int employeeKey) {
         return absenceDao.getAbsencesByEmployeeId(employeeKey);
     }

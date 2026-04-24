@@ -17,11 +17,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
+import de.mamakow.dienstplanapotheke.session.SessionManager;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
@@ -41,7 +41,8 @@ public class RetrofitNetworkHandler {
     private final Gson gson;
 
     public RetrofitNetworkHandler(Context context) {
-        String apiBaseUrl = context.getString(R.string.api_base_url);
+        SessionManager sessionManager = new SessionManager(context);
+        String apiBaseUrl = sessionManager.getApiBaseUrl();
 
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);

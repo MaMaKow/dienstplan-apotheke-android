@@ -19,6 +19,9 @@ public interface AbsenceDao {
     @Query("SELECT * FROM absence_table")
     LiveData<List<Absence>> getAllAbsencesLiveData();
 
+    @Query("SELECT * FROM absence_table WHERE strftime('%Y', start_date) = :year OR strftime('%Y', end_date) = :year")
+    LiveData<List<Absence>> getAllAbsencesByYearLiveData(String year);
+
     @Query("SELECT * FROM absence_table WHERE employee_key = :employeeId")
     LiveData<List<Absence>> getAbsencesByEmployeeId(int employeeId);
 

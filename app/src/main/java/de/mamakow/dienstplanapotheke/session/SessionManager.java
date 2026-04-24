@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.network.NetworkHandler;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -12,10 +13,13 @@ public class SessionManager {
     private static final String TAG = "SessionManager";
     private static final String PREFS_NAME = "AppPreferences";
     private static final String TOKEN_KEY = "session_token";
+    private static final String BASE_URL_KEY = "base_url";
     private final SharedPreferences sharedPreferences;
     private final NetworkHandler networkHandler;
+    private final Context context;
 
     public SessionManager(Context context) {
+        this.context = context;
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         networkHandler = new NetworkHandler(context, this);
     }
@@ -70,6 +74,32 @@ public class SessionManager {
 
     public String getSessionToken() {
         return sharedPreferences.getString(TOKEN_KEY, null);
+    }
+
+    public void saveBaseUrl(String url) {
+        if (url != null && !url.trim().isEmpty() && !url.endsWith("/")) {
+            url += "/";
+        }
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(BASE_URL_KEY, url);
+        editor.apply();
+    }
+
+    public String getBaseUrl() {
+        String url = sharedPreferences.getString(BASE_URL_KEY, "");
+        if (url == null || url.trim().isEmpty()) {
+            return context.getString(R.string.test_page_url);
+        }
+        return url;
+    }
+
+    public boolean isBaseUrlSet() {
+        String url = sharedPreferences.getString(BASE_URL_KEY, null);
+        return url != null && !url.trim().isEmpty();
+    }
+
+    public String getApiBaseUrl() {
+        return getBaseUrl() + "src/php/restful-api/";
     }
 
     public void logout() {

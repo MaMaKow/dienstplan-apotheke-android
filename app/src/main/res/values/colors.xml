@@ -7,4 +7,12 @@
     <color name="profession_icon_tint">#555555</color>
     <color name="dark_icon_tint">#8A000000
     </color>   <!-- 54% black (Material standard for medium emphasis) -->
+
+    <!-- Heatmap Colors -->
+    <color name="heatmap_0">#EEEEEE</color>
+    <color name="heatmap_1">#C8E6C9</color>
+    <color name="heatmap_2">#FFF9C4</color>
+    <color name="heatmap_3">#FFCC80</color>
+    <color name="heatmap_4_plus">#EF9A9A</color>
+    <color name="heatmap_text_gray">#757575</color>
 </resources>

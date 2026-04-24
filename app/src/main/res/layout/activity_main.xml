@@ -15,34 +15,43 @@
         android:padding="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <RadioGroup
-            android:id="@+id/viewModeRadioGroup"
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:scrollbars="none">
 
-            <RadioButton
-                android:id="@+id/radioEmployeeView"
-                android:layout_width="0dp"
+            <RadioGroup
+                android:id="@+id/viewModeRadioGroup"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="true"
-                android:text="@string/mitarbeiter_ansicht" />
+                android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/radioBranchView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/filial_ansicht" />
+                <RadioButton
+                    android:id="@+id/radioEmployeeView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/mitarbeiter_ansicht" />
 
-            <RadioButton
-                android:id="@+id/radioAbsenceView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/abwesenheiten_ansicht" />
-        </RadioGroup>
+                <RadioButton
+                    android:id="@+id/radioBranchView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filial_ansicht" />
+
+                <RadioButton
+                    android:id="@+id/radioAbsenceView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/abwesenheiten_ansicht" />
+
+                <RadioButton
+                    android:id="@+id/radioTeamHeatmapView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/team_heatmap_ansicht" />
+            </RadioGroup>
+        </HorizontalScrollView>
 
         <LinearLayout
             android:id="@+id/navigationLayout"
@@ -116,5 +125,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/selectionLayout"
         tools:listitem="@layout/item_roster_day" />
+
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/selectionLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -59,6 +59,10 @@ public class MainViewModel extends AndroidViewModel {
         return absenceRepository.getAbsencesByEmployeeIdAndYear(employeeKey, year);
     }
 
+    public void fetchAllAbsences() {
+        absenceRepository.fetchAndSaveAbsences();
+    }
+
     public void refreshData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {
         employeeRepository.fetchAndSaveEmployees();
         branchRepository.fetchAndSaveBranches();

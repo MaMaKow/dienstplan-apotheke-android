@@ -35,7 +35,7 @@ public class AbsenceAdapter extends RecyclerView.Adapter<AbsenceAdapter.AbsenceV
     @Override
     public void onBindViewHolder(@NonNull AbsenceViewHolder holder, int position) {
         Absence absence = absences.get(position);
-        holder.tvAbsenceType.setText(absence.getAbsenceType());
+        holder.tvAbsenceType.setText(absence.getAbsenceTypeString());
         String dateRange = absence.getStartDate().format(formatter) + " - " + absence.getEndDate().format(formatter);
         holder.tvAbsenceDate.setText(dateRange);
         holder.tvAbsenceComment.setText(absence.getComment());

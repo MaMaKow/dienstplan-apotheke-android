@@ -13,7 +13,7 @@ import de.mamakow.dienstplanapotheke.model.Converters;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 
-@Database(entities = {RosterItem.class, Employee.class, Branch.class, Absence.class}, version = 5, exportSchema = false)
+@Database(entities = {RosterItem.class, Employee.class, Branch.class, Absence.class}, version = 6, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
