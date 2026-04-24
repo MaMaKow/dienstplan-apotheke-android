@@ -20,4 +20,9 @@
     <string name="team_heatmap_ansicht">Team Heatmap</string>
     <string name="jahresansicht_abwesenheiten">Jahresübersicht Abwesenheiten:</string>
     <string name="team_heatmap_title">Team Abwesenheits-Heatmap</string>
+    <string name="login_title">Anmelden</string>
+    <string name="username_hint">Benutzername</string>
+    <string name="password_hint">Passwort</string>
+    <string name="login_button">Einloggen</string>
+    <string name="login_failed">Login fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.</string>
 </resources>

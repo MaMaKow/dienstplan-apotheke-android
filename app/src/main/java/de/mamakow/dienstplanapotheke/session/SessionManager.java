@@ -7,13 +7,15 @@ import android.util.Log;
 import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.network.NetworkHandler;
-import io.github.cdimascio.dotenv.Dotenv;
 
 public class SessionManager {
     private static final String TAG = "SessionManager";
     private static final String PREFS_NAME = "AppPreferences";
     private static final String TOKEN_KEY = "session_token";
     private static final String BASE_URL_KEY = "base_url";
+    private static final String USERNAME_KEY = "username";
+    private static final String PASSWORD_KEY = "password";
+
     private final SharedPreferences sharedPreferences;
     private final NetworkHandler networkHandler;
     private final Context context;
@@ -25,37 +27,40 @@ public class SessionManager {
     }
 
     public void performLogin() {
-        Log.d(TAG, "performLogin gestartet");
-        try {
-            Dotenv dotenv = Dotenv.configure()
-                    .directory("/assets")
-                    .filename("env")
-                    .load();
+        String username = sharedPreferences.getString(USERNAME_KEY, null);
+        String password = sharedPreferences.getString(PASSWORD_KEY, null);
 
-            String userName = dotenv.get("USERNAME");
-            String userPassphrase = dotenv.get("PASSPHRASE");
+        if (username != null && password != null) {
+            performLogin(username, password, null);
+        } else {
+            Log.e(TAG, "No credentials stored for automatic login.");
+        }
+    }
 
-            if (userName == null || userPassphrase == null) {
-                Log.e(TAG, "Username oder Passphrase in .env nicht gefunden!");
-                return;
+    public void performLogin(String userName, String userPassphrase, LoginCallback callback) {
+        Log.d(TAG, "performLogin gestartet für User: " + userName);
+        networkHandler.login(userName, userPassphrase, new LoginCallback() {
+            @Override
+            public void onSuccess(String token) {
+                saveToken(token);
+                saveCredentials(userName, userPassphrase);
+                Log.i(TAG, "Login erfolgreich. Token erhalten und gespeichert.");
+                if (callback != null) callback.onSuccess(token);
             }
 
-            Log.i(TAG, "Versuche Login für User: " + userName);
-            networkHandler.login(userName, userPassphrase, new LoginCallback() {
-                @Override
-                public void onSuccess(String token) {
-                    saveToken(token);
-                    Log.i(TAG, "Login erfolgreich. Token erhalten und gespeichert.");
-                }
+            @Override
+            public void onFailure(Exception exception) {
+                Log.e(TAG, "Login fehlgeschlagen: " + exception.getMessage(), exception);
+                if (callback != null) callback.onFailure(exception);
+            }
+        });
+    }
 
-                @Override
-                public void onFailure(Exception exception) {
-                    Log.e(TAG, "Login fehlgeschlagen: " + exception.getMessage(), exception);
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Fehler beim Laden der .env Datei oder beim Login-Prozess", e);
-        }
+    private void saveCredentials(String username, String password) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(USERNAME_KEY, username);
+        editor.putString(PASSWORD_KEY, password);
+        editor.apply();
     }
 
     public void saveToken(String token) {
@@ -103,9 +108,11 @@ public class SessionManager {
     }
 
     public void logout() {
-        Log.d(TAG, "Logout: Lösche Token aus SharedPreferences");
+        Log.d(TAG, "Logout: Lösche Token und Credentials aus SharedPreferences");
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove(TOKEN_KEY);
+        editor.remove(USERNAME_KEY);
+        editor.remove(PASSWORD_KEY);
         editor.apply();
     }
 }

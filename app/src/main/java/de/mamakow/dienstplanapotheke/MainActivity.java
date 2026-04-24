@@ -3,6 +3,7 @@ package de.mamakow.dienstplanapotheke;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -12,6 +13,7 @@ import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +34,7 @@ import java.util.Locale;
 
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
+import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import de.mamakow.dienstplanapotheke.view.AbsenceAdapter;
 import de.mamakow.dienstplanapotheke.view.HeatmapFragment;
@@ -77,18 +80,57 @@ public class MainActivity extends AppCompatActivity {
         if (!sessionManager.isBaseUrlSet()) {
             showUrlInputDialog(sessionManager);
         } else {
+            checkLoginAndProceed(sessionManager);
+        }
+    }
+
+    private void checkLoginAndProceed(SessionManager sessionManager) {
+        if (sessionManager.isNotLoggedIn()) {
+            showLoginDialog(sessionManager);
+        } else {
             proceedWithInitialization(sessionManager);
         }
+    }
+
+    private void showLoginDialog(SessionManager sessionManager) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_login, null);
+        EditText editTextUsername = dialogView.findViewById(R.id.editTextUsername);
+        EditText editTextPassword = dialogView.findViewById(R.id.editTextPassword);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.login_title)
+                .setView(dialogView)
+                .setCancelable(false)
+                .setPositiveButton(R.string.login_button, (dialog, which) -> {
+                    String username = editTextUsername.getText().toString().trim();
+                    String password = editTextPassword.getText().toString().trim();
+
+                    if (!username.isEmpty() && !password.isEmpty()) {
+                        sessionManager.performLogin(username, password, new LoginCallback() {
+                            @Override
+                            public void onSuccess(String token) {
+                                runOnUiThread(() -> proceedWithInitialization(sessionManager));
+                            }
+
+                            @Override
+                            public void onFailure(Exception exception) {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this, R.string.login_failed, Toast.LENGTH_LONG).show();
+                                    showLoginDialog(sessionManager);
+                                });
+                            }
+                        });
+                    } else {
+                        showLoginDialog(sessionManager);
+                    }
+                })
+                .show();
     }
 
     private void proceedWithInitialization(SessionManager sessionManager) {
         setupRecyclerView();
         setupViewModel();
         setupListeners();
-
-        if (sessionManager.isNotLoggedIn()) {
-            sessionManager.performLogin();
-        }
 
         updateUI();
         refreshData();
@@ -108,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
                     String url = input.getText().toString().trim();
                     if (!url.isEmpty()) {
                         sessionManager.saveBaseUrl(url);
-                        proceedWithInitialization(sessionManager);
+                        checkLoginAndProceed(sessionManager);
                     } else {
                         showUrlInputDialog(sessionManager); // Erneut fragen, wenn leer
                     }
