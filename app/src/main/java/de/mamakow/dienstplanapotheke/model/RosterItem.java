@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -60,6 +61,25 @@ public class RosterItem {
     private Status status;
 
     public RosterItem() {
+    }
+
+    /**
+     * Berechnet die Netto-Arbeitszeit in Stunden (Dienstzeit minus Pausenzeit).
+     */
+    public double calculateNetWorkingHours() {
+        if (dutyStartDateTime == null || dutyEndDateTime == null) {
+            return 0;
+        }
+
+        Duration totalDuty = Duration.between(dutyStartDateTime, dutyEndDateTime);
+        long totalMinutes = totalDuty.toMinutes();
+
+        if (breakStartDateTime != null && breakEndDateTime != null) {
+            Duration breakDuration = Duration.between(breakStartDateTime, breakEndDateTime);
+            totalMinutes -= breakDuration.toMinutes();
+        }
+
+        return Math.max(0, totalMinutes / 60.0);
     }
 
     public int getBranchId() {

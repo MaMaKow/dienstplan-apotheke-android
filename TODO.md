@@ -36,3 +36,24 @@
 
 - [x] **Mitarbeiter-Auswahl**: Spinner zur Auswahl des Mitarbeiters in der Wochenansicht (aktuell
   fest auf ID 7).
+
+## 8. Testabdeckung & Softwarequalität
+
+### Prio 1: Kritische Logik & Datenintegrität
+
+- [x] **RosterDatabaseTest**: DAO-Logik für Dienstpläne (CRUD & Filter).
+- [x] **ConvertersTest**: Unit-Tests für `Converters` (Mapping von LocalDate/LocalDateTime).
+- [ ] **RosterTest (Erweiterung)**: Logik für Arbeitszeitberechnungen (Pause vs. Netto-Arbeitszeit).
+
+### Prio 2: Datenbank & Business Logik
+
+- [ ] **EmployeeDatabaseTest**: DAO-Logik für Mitarbeiterverwaltung.
+- [ ] **AbsenceDatabaseTest**: DAO-Logik für Abwesenheiten/Urlaub.
+- [ ] **BranchDatabaseTest**: DAO-Logik für Filialverwaltung.
+- [ ] **RosterRepositoryTest**: Synchronisation zwischen Netzwerk (Retrofit) und Datenbank (Room).
+
+### Prio 3: UI-Logik & Stabilität
+
+- [ ] **RosterViewModelTest**: Validierung der Datenaufbereitung für die View.
+- [ ] **EmployeeViewModelTest**: Validierung der Mitarbeiter-Filterlogik.
+- [ ] **MainActivityTest (Espresso)**: Grundlegende UI-Flows (Navigation, Listenanzeige).
