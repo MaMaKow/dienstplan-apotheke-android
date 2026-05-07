@@ -6,6 +6,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +24,9 @@ public interface RosterItemDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertRosterItems(List<RosterItem> rosterItems);
+
+    @Update
+    void updateRosterItem(RosterItem rosterItem);
 
     @Delete
     void deleteRosterItem(RosterItem rosterItem);

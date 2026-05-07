@@ -46,6 +46,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.arch.core.testing)
     //implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
     implementation(libs.dotenv)
