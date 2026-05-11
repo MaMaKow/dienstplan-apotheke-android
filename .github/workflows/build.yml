@@ -1,0 +1,58 @@
+# .github/workflows/build.yml
+name: Android CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Ermöglicht es, den Workflow manuell über den GitHub Actions-Tab zu starten
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Die Umgebung, in der der Job läuft
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Den Code des Repositories herunterladen
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Java Development Kit (JDK) einrichten
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin' # Das OpenJDK von Eclipse Temurin
+
+      # 3. (Empfohlen) Gradle-Caching für schnellere Builds
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 4. Dem Gradle Wrapper Ausführungsrechte geben
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 5. Die App im Debug-Modus bauen
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      # 6. (Optional) Die Unit-Tests ausführen
+      - name: Run unit tests
+        run: ./gradlew test
+
+      # 7. (Optional) Die erstellte APK als Artefakt für den Download bereitstellen
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/

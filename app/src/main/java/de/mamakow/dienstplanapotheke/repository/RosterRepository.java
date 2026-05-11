@@ -91,10 +91,15 @@ public class RosterRepository {
     }
 
     public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey, Integer branchId) {
+        fetchAndSaveRosterData(dateStart, dateEnd, employeeKey, branchId, null);
+    }
+
+    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey, Integer branchId, RetrofitNetworkHandler.NetworkResponseCallback<Void> finalCallback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             Log.e(TAG, "Token is null. Triggering login...");
             sessionManager.performLogin();
+            if (finalCallback != null) finalCallback.onError("Token is null");
             return;
         }
         retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
@@ -108,6 +113,7 @@ public class RosterRepository {
                     } else {
                         Log.d(TAG, "No roster items received from server.");
                     }
+                    if (finalCallback != null) finalCallback.onSuccess(null);
                 });
             }
 
@@ -119,6 +125,7 @@ public class RosterRepository {
                     sessionManager.logout();
                     sessionManager.performLogin();
                 }
+                if (finalCallback != null) finalCallback.onError(errorMessage);
             }
         });
     }

@@ -5,6 +5,7 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +27,8 @@ public class MainViewModel extends AndroidViewModel {
     private final EmployeeRepository employeeRepository;
     private final BranchRepository branchRepository;
     private final AbsenceRepository absenceRepository;
+    private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -59,14 +62,40 @@ public class MainViewModel extends AndroidViewModel {
         return absenceRepository.getAbsencesByEmployeeIdAndYear(employeeKey, year);
     }
 
+    public LiveData<Boolean> getIsLoading() {
+        return isLoading;
+    }
+
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
+
     public void fetchAllAbsences() {
         absenceRepository.fetchAndSaveAbsences();
     }
 
     public void refreshData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {
+        isLoading.setValue(true);
+        errorMessage.setValue(null);
+
+        // Wir starten mehrere Anfragen. Für die ProgressBar orientieren wir uns primär am Roster,
+        // da dies die Hauptdaten sind.
         employeeRepository.fetchAndSaveEmployees();
         branchRepository.fetchAndSaveBranches();
-        rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId);
+
+        rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+            @Override
+            public void onSuccess(Void data) {
+                isLoading.postValue(false);
+            }
+
+            @Override
+            public void onError(String message) {
+                isLoading.postValue(false);
+                errorMessage.postValue(message);
+            }
+        });
+
         if (employeeKey != null) {
             absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey);
         }
