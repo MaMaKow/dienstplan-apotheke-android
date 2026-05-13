@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -22,6 +23,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -56,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton buttonNextDate;
     private Spinner branchSpinner;
     private Spinner employeeSpinner;
+    private ProgressBar progressBar;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     private TextView currentSelectionTextView;
     private LocalDate selectedDate;
@@ -168,6 +172,8 @@ public class MainActivity extends AppCompatActivity {
         currentSelectionTextView = findViewById(R.id.currentSelectionTextView);
         recyclerView = findViewById(R.id.recyclerViewRoster);
         fragmentContainer = findViewById(R.id.fragmentContainer);
+        progressBar = findViewById(R.id.progressBar);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
     }
 
     private void setupRecyclerView() {
@@ -205,6 +211,21 @@ public class MainActivity extends AppCompatActivity {
                 rosterAdapter.setRosterDays(roster.getRosterDays());
             }
         });
+
+        viewModel.getIsLoading().observe(this, isLoading -> {
+            if (!swipeRefreshLayout.isRefreshing()) {
+                progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            }
+            if (!isLoading) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
+        viewModel.getErrorMessage().observe(this, error -> {
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void observeAbsences() {
@@ -219,6 +240,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
+        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+
         viewModeRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioBranchView) {
                 currentViewMode = ViewMode.BRANCH;
@@ -306,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateViewModeUI() {
         recyclerView.setVisibility(currentViewMode == ViewMode.TEAM_HEATMAP ? View.GONE : View.VISIBLE);
         fragmentContainer.setVisibility(currentViewMode == ViewMode.TEAM_HEATMAP ? View.VISIBLE : View.GONE);
+        swipeRefreshLayout.setEnabled(currentViewMode != ViewMode.TEAM_HEATMAP);
 
         if (currentViewMode == ViewMode.TEAM_HEATMAP) {
             showFragment(new HeatmapFragment());

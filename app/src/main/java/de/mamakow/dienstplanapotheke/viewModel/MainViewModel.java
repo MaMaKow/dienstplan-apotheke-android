@@ -78,23 +78,28 @@ public class MainViewModel extends AndroidViewModel {
         isLoading.setValue(true);
         errorMessage.setValue(null);
 
-        // Wir starten mehrere Anfragen. Für die ProgressBar orientieren wir uns primär am Roster,
-        // da dies die Hauptdaten sind.
+        // Wir starten mehrere Anfragen.
         employeeRepository.fetchAndSaveEmployees();
         branchRepository.fetchAndSaveBranches();
 
-        rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
-            @Override
-            public void onSuccess(Void data) {
-                isLoading.postValue(false);
-            }
+        // Wenn weder Mitarbeiter noch Filiale angegeben sind, kann der Dienstplan nicht geladen werden (API-Vorgabe).
+        // Wir beenden das Loading dann vorzeitig, da keine Roster-Anfrage gestellt wird.
+        if (employeeKey == null && branchId == null) {
+            isLoading.postValue(false);
+        } else {
+            rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+                @Override
+                public void onSuccess(Void data) {
+                    isLoading.postValue(false);
+                }
 
-            @Override
-            public void onError(String message) {
-                isLoading.postValue(false);
-                errorMessage.postValue(message);
-            }
-        });
+                @Override
+                public void onError(String message) {
+                    isLoading.postValue(false);
+                    errorMessage.postValue(message);
+                }
+            });
+        }
 
         if (employeeKey != null) {
             absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey);

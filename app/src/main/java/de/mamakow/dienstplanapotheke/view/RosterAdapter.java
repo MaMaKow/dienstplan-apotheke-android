@@ -145,14 +145,15 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
                         iconResId = R.drawable.outline_admin_meds_24;
                         backgroundColor = itemView.getContext().getColor(R.color.highlight_pharmacist);
                         cardView.setStrokeWidth(4); // Stärkere Umrandung
-                    } else if ("Pharmazieingenieur".equalsIgnoreCase(profession)) {
-                        iconResId = R.drawable.baseline_local_pharmacy_24;
+                    } else if ("Pharmazieingenieur".equalsIgnoreCase(profession) || "PI".equalsIgnoreCase(profession)) {
+                        iconResId = R.drawable.outline_medication_24;
                         backgroundColor = itemView.getContext().getColor(R.color.highlight_engineer);
                         cardView.setStrokeWidth(4);
                     } else if ("PTA".equalsIgnoreCase(profession)) {
                         iconResId = R.drawable.outline_medication_24;
                         cardView.setStrokeWidth(1);
                     } else {
+                        // Nichtpharmazeutisches Personal:
                         iconResId = R.drawable.baseline_more_horiz_24;
                         cardView.setStrokeWidth(1);
                     }
