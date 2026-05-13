@@ -15,6 +15,8 @@ public class SessionManager {
     private static final String BASE_URL_KEY = "base_url";
     private static final String USERNAME_KEY = "username";
     private static final String PASSWORD_KEY = "password";
+    private static final String USER_ID_KEY = "user_id";
+    private static final String USER_DISPLAY_NAME_KEY = "user_display_name";
 
     private final SharedPreferences sharedPreferences;
     private final NetworkHandler networkHandler;
@@ -61,6 +63,22 @@ public class SessionManager {
         editor.putString(USERNAME_KEY, username);
         editor.putString(PASSWORD_KEY, password);
         editor.apply();
+    }
+
+    public void saveUserData(int userId, String userName) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(USER_ID_KEY, userId);
+        editor.putString(USER_DISPLAY_NAME_KEY, userName);
+        editor.apply();
+        Log.d(TAG, "User-Daten gespeichert: ID=" + userId + ", Name=" + userName);
+    }
+
+    public int getUserId() {
+        return sharedPreferences.getInt(USER_ID_KEY, -1);
+    }
+
+    public String getUserDisplayName() {
+        return sharedPreferences.getString(USER_DISPLAY_NAME_KEY, "");
     }
 
     public void saveToken(String token) {
@@ -113,6 +131,8 @@ public class SessionManager {
         editor.remove(TOKEN_KEY);
         editor.remove(USERNAME_KEY);
         editor.remove(PASSWORD_KEY);
+        editor.remove(USER_ID_KEY);
+        editor.remove(USER_DISPLAY_NAME_KEY);
         editor.apply();
     }
 }

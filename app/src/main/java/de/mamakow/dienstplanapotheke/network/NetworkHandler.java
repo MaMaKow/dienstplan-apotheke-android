@@ -1,6 +1,7 @@
 package de.mamakow.dienstplanapotheke.network;
 
 import android.content.Context;
+import android.util.Base64;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
@@ -9,6 +10,7 @@ import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import okhttp3.Call;
@@ -114,6 +116,10 @@ public class NetworkHandler {
                     if (jsonObject.has("accessToken")) {
                         String token = jsonObject.get("accessToken").getAsString();
                         Log.d(TAG, "Found token in json: " + token);
+
+                        // Extract and save user data from the JWT token
+                        extractAndSaveUserData(token);
+
                         callback.onSuccess(token);
                     } else {
                         Log.d(TAG, jsonObject.toString());
@@ -124,5 +130,40 @@ public class NetworkHandler {
                 }
             }
         });
+    }
+
+    /**
+     * Decodes the JWT payload to extract userPrimaryKey and userName.
+     */
+    private void extractAndSaveUserData(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) {
+                Log.w(TAG, "Invalid JWT format");
+                return;
+            }
+
+            // The payload is the second part of the JWT
+            byte[] decodedBytes = Base64.decode(parts[1], Base64.URL_SAFE);
+            String payloadJson = new String(decodedBytes, StandardCharsets.UTF_8);
+
+            JsonObject payload = new JsonParser().parse(payloadJson).getAsJsonObject();
+
+            int userId = -1;
+            if (payload.has("userPrimaryKey")) {
+                userId = payload.get("userPrimaryKey").getAsInt();
+            }
+
+            String userName = "";
+            if (payload.has("userName")) {
+                userName = payload.get("userName").getAsString();
+            }
+
+            if (userId != -1) {
+                sessionManager.saveUserData(userId, userName);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error extracting user data from JWT", e);
+        }
     }
 }
