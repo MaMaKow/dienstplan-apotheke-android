@@ -4,9 +4,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.mamakow.dienstplanapotheke.R;
+import de.mamakow.dienstplanapotheke.model.UserData;
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.network.NetworkHandler;
+import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 
 public class SessionManager {
     private static final String TAG = "SessionManager";
@@ -17,6 +22,8 @@ public class SessionManager {
     private static final String PASSWORD_KEY = "password";
     private static final String USER_ID_KEY = "user_id";
     private static final String USER_DISPLAY_NAME_KEY = "user_display_name";
+    private static final String USER_EMAIL_KEY = "user_email";
+    private static final String USER_PRIVILEGES_KEY = "user_privileges";
 
     private final SharedPreferences sharedPreferences;
     private final NetworkHandler networkHandler;
@@ -46,14 +53,36 @@ public class SessionManager {
             public void onSuccess(String token) {
                 saveToken(token);
                 saveCredentials(userName, userPassphrase);
-                Log.i(TAG, "Login erfolgreich. Token erhalten und gespeichert.");
-                if (callback != null) callback.onSuccess(token);
+                Log.i(TAG, "Login erfolgreich. Token erhalten und gespeichert. Lade Benutzerdaten...");
+
+                // Nach erfolgreichem Login: Benutzerdaten laden
+                fetchAndSaveCurrentUser(token, callback);
             }
 
             @Override
             public void onFailure(Exception exception) {
                 Log.e(TAG, "Login fehlgeschlagen: " + exception.getMessage(), exception);
                 if (callback != null) callback.onFailure(exception);
+            }
+        });
+    }
+
+    public void fetchAndSaveCurrentUser(String token, LoginCallback callback) {
+        RetrofitNetworkHandler retrofitHandler = new RetrofitNetworkHandler(context);
+        retrofitHandler.fetchCurrentUser(token, new RetrofitNetworkHandler.NetworkResponseCallback<UserData>() {
+            @Override
+            public void onSuccess(UserData userData) {
+                saveFullUserData(userData);
+                Log.i(TAG, "Benutzerdaten erfolgreich geladen und gespeichert.");
+                if (callback != null) callback.onSuccess(token);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Fehler beim Laden der Benutzerdaten: " + errorMessage);
+                // Auch wenn UserData fehlschlägt, haben wir den Token, also Login war technisch erfolgreich.
+                // Aber wir rufen callback.onSuccess auf, damit die App weitermachen kann.
+                if (callback != null) callback.onSuccess(token);
             }
         });
     }
@@ -70,7 +99,19 @@ public class SessionManager {
         editor.putInt(USER_ID_KEY, userId);
         editor.putString(USER_DISPLAY_NAME_KEY, userName);
         editor.apply();
-        Log.d(TAG, "User-Daten gespeichert: ID=" + userId + ", Name=" + userName);
+        Log.d(TAG, "User-Daten gespeichert (Legacy): ID=" + userId + ", Name=" + userName);
+    }
+
+    public void saveFullUserData(UserData userData) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(USER_ID_KEY, userData.getId());
+        editor.putString(USER_DISPLAY_NAME_KEY, userData.getUserName());
+        editor.putString(USER_EMAIL_KEY, userData.getEmail());
+        if (userData.getPrivileges() != null) {
+            editor.putStringSet(USER_PRIVILEGES_KEY, new HashSet<>(userData.getPrivileges()));
+        }
+        editor.apply();
+        Log.d(TAG, "Vollständige User-Daten gespeichert: " + userData.getUserName());
     }
 
     public int getUserId() {
@@ -79,6 +120,14 @@ public class SessionManager {
 
     public String getUserDisplayName() {
         return sharedPreferences.getString(USER_DISPLAY_NAME_KEY, "");
+    }
+
+    public String getUserEmail() {
+        return sharedPreferences.getString(USER_EMAIL_KEY, "");
+    }
+
+    public Set<String> getUserPrivileges() {
+        return sharedPreferences.getStringSet(USER_PRIVILEGES_KEY, new HashSet<>());
     }
 
     public void saveToken(String token) {
@@ -133,6 +182,8 @@ public class SessionManager {
         editor.remove(PASSWORD_KEY);
         editor.remove(USER_ID_KEY);
         editor.remove(USER_DISPLAY_NAME_KEY);
+        editor.remove(USER_EMAIL_KEY);
+        editor.remove(USER_PRIVILEGES_KEY);
         editor.apply();
     }
 }

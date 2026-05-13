@@ -21,6 +21,7 @@ import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
+import de.mamakow.dienstplanapotheke.model.UserData;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -240,6 +241,21 @@ public class RetrofitNetworkHandler {
         });
     }
 
+    public void fetchCurrentUser(String token, NetworkResponseCallback<UserData> callback) {
+        Log.i(TAG, "fetchCurrentUser() gestartet");
+        rosterApi.getCurrentUser("Bearer " + token).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleSingleResponse(response, UserData.class, callback);
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
     private interface RosterApi {
         @GET("rosters")
         Call<JsonElement> getRoster(@Header("Authorization") String auth, @Query("dateStart") String s, @Query("dateEnd") String e, @Query("employeeKey") Integer ek, @Query("branchId") Integer bi);
@@ -261,6 +277,9 @@ public class RetrofitNetworkHandler {
 
         @GET("employees/{id}/absences")
         Call<JsonElement> getEmployeeAbsences(@Header("Authorization") String auth, @Path("id") int employeeKey);
+
+        @GET("users/me")
+        Call<JsonElement> getCurrentUser(@Header("Authorization") String auth);
     }
 
     public interface NetworkResponseCallback<T> {
