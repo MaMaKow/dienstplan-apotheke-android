@@ -40,15 +40,27 @@ public class RetrofitNetworkHandler {
     final String TAG = "RetrofitNetHandler";
     private final RosterApi rosterApi;
     private final Gson gson;
+    private final SessionManager sessionManager;
 
     public RetrofitNetworkHandler(Context context) {
-        SessionManager sessionManager = new SessionManager(context);
+        sessionManager = new SessionManager(context);
         String apiBaseUrl = sessionManager.getApiBaseUrl();
 
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(logging)
+                .addInterceptor(chain -> {
+                    // Hol dir das aktuellste Token direkt aus dem SessionManager
+                    String token = sessionManager.getSessionToken();
+                    okhttp3.Request.Builder builder = chain.request().newBuilder();
+
+                    if (token != null && !token.isEmpty()) {
+                        builder.header("Authorization", "Bearer " + token);
+                    }
+
+                    return chain.proceed(builder.build());
+                })
                 .build();
 
         DateTimeFormatter apiDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -82,6 +94,12 @@ public class RetrofitNetworkHandler {
     }
 
     private <T> void handleListResponse(Response<JsonElement> response, Type listType, NetworkResponseCallback<List<T>> callback) {
+        if (response.code() == 401) {
+            Log.w(TAG, "401 Unauthorized - Starte automatischen Re-Login");
+            sessionManager.performLogin();
+            callback.onError("Sitzung abgelaufen. Bitte versuchen Sie es gleich erneut.");
+            return;
+        }
         if (response.isSuccessful() && response.body() != null) {
             JsonElement body = response.body();
             if (body.isJsonArray()) {
