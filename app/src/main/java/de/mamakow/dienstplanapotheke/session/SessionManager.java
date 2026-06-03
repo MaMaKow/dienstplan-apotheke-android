@@ -23,6 +23,7 @@ public class SessionManager {
     private static final String USER_ID_KEY = "user_id";
     private static final String USER_DISPLAY_NAME_KEY = "user_display_name";
     private static final String USER_EMAIL_KEY = "user_email";
+    private static final String USER_EMPLOYEE_KEY = "user_employee_key";
     private static final String USER_PRIVILEGES_KEY = "user_privileges";
 
     private final SharedPreferences sharedPreferences;
@@ -107,6 +108,7 @@ public class SessionManager {
         editor.putInt(USER_ID_KEY, userData.getId());
         editor.putString(USER_DISPLAY_NAME_KEY, userData.getUserName());
         editor.putString(USER_EMAIL_KEY, userData.getEmail());
+        editor.putInt(USER_EMPLOYEE_KEY, userData.getEmployeeKey() != null ? userData.getEmployeeKey() : -1);
         if (userData.getPrivileges() != null) {
             editor.putStringSet(USER_PRIVILEGES_KEY, new HashSet<>(userData.getPrivileges()));
         }
@@ -116,6 +118,10 @@ public class SessionManager {
 
     public int getUserId() {
         return sharedPreferences.getInt(USER_ID_KEY, -1);
+    }
+
+    public int getUserEmployeeKey() {
+        return sharedPreferences.getInt("employee_key", -1);
     }
 
     public String getUserDisplayName() {

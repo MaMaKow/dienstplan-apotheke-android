@@ -21,6 +21,7 @@ import de.mamakow.dienstplanapotheke.model.AbsenceDayData;
 import de.mamakow.dienstplanapotheke.model.AbsenceMonthData;
 import de.mamakow.dienstplanapotheke.model.AbsenceWithName;
 import de.mamakow.dienstplanapotheke.model.Employee;
+import de.mamakow.dienstplanapotheke.model.Workforce;
 import de.mamakow.dienstplanapotheke.repository.AbsenceRepository;
 import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
 
@@ -38,22 +39,23 @@ public class HeatmapViewModel extends AndroidViewModel {
         employeeRepository = new EmployeeRepository(db.employeeDao(), null, null);
 
         LiveData<List<Absence>> absencesLiveData = absenceRepository.getAllAbsencesByYearLiveData(LocalDate.now().getYear());
-        LiveData<List<Employee>> employeesLiveData = employeeRepository.getAllEmployeesLiveData();
 
-        heatmapData.addSource(absencesLiveData, absences -> combine(absences, employeesLiveData.getValue()));
-        heatmapData.addSource(employeesLiveData, employees -> combine(absencesLiveData.getValue(), employees));
+        LiveData<Workforce> workforceLiveData = employeeRepository.getWorkforceLiveData();
+
+        heatmapData.addSource(absencesLiveData, absences -> combine(absences, workforceLiveData.getValue()));
+        heatmapData.addSource(workforceLiveData, workforce -> combine(absencesLiveData.getValue(), workforce));
     }
 
     public LiveData<List<AbsenceMonthData>> getHeatmapData() {
         return heatmapData;
     }
 
-    private void combine(List<Absence> absences, List<Employee> employees) {
-        if (absences == null || employees == null) return;
+    private void combine(List<Absence> absences, Workforce workforce) {
+        if (absences == null || workforce == null) return;
 
         Map<Integer, Employee> employeeMap = new HashMap<>();
-        for (Employee e : employees) {
-            employeeMap.put(e.getEmployeeKey(), e);
+        for (Employee employee : workforce.getEmployees()) {
+            employeeMap.put(employee.getEmployeeKey(), employee);
         }
 
         LongSparseArray<AbsenceDayData> dayDataMap = new LongSparseArray<>();

@@ -13,8 +13,8 @@ import java.util.List;
 import de.mamakow.dienstplanapotheke.database.AppDatabase;
 import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
-import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.Roster;
+import de.mamakow.dienstplanapotheke.model.Workforce;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 import de.mamakow.dienstplanapotheke.repository.AbsenceRepository;
 import de.mamakow.dienstplanapotheke.repository.BranchRepository;
@@ -50,8 +50,10 @@ public class MainViewModel extends AndroidViewModel {
         return rosterRepository.getRosterData(startDate, endDate);
     }
 
-    public LiveData<List<Employee>> getEmployees() {
-        return employeeRepository.getAllEmployeesLiveData();
+
+    public LiveData<Workforce> getWorkforce() {
+        return employeeRepository.getWorkforceLiveData();
+
     }
 
     public LiveData<List<Branch>> getBranches() {

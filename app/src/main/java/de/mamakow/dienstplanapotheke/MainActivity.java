@@ -36,6 +36,7 @@ import java.util.Locale;
 
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
+import de.mamakow.dienstplanapotheke.model.Workforce;
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import de.mamakow.dienstplanapotheke.view.AbsenceAdapter;
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Branch> allBranches = new ArrayList<>();
     private List<Employee> employees = new ArrayList<>();
+    private Workforce currentWorkforce;
     private ViewMode currentViewMode = ViewMode.EMPLOYEE;
 
     @Override
@@ -78,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         initViews();
 
         // Initiales Datum setzen
-        selectedDate = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+        selectedDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
         SessionManager sessionManager = new SessionManager(this);
         if (!sessionManager.isBaseUrlSet()) {
@@ -133,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void proceedWithInitialization(SessionManager sessionManager) {
         setupRecyclerView();
-        setupViewModel();
+        setupViewModel(sessionManager);
         setupListeners();
 
         updateUI();
@@ -183,20 +185,23 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(rosterAdapter);
     }
 
-    private void setupViewModel() {
+    private void setupViewModel(SessionManager sessionManager) {
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        viewModel.getEmployees().observe(this, employees -> {
-            if (employees != null) {
-                this.employees = employees;
-                rosterAdapter.setEmployees(employees);
-                updateEmployeeSpinner();
+        viewModel.getWorkforce().observe(this, workforce -> {
+            if (workforce != null) {
+                this.currentWorkforce = workforce;
+                rosterAdapter.setEmployees(workforce);
+                updateEmployeeSpinner(sessionManager);
                 if (currentViewMode == ViewMode.ABSENCE) {
                     observeAbsences();
                 }
             }
         });
-
+        viewModel.getWorkforce().observe(this, workforce -> {
+            this.currentWorkforce = workforce;
+            updateEmployeeSpinner(sessionManager);
+        });
         viewModel.getBranches().observe(this, branches -> {
             if (branches != null && !branches.equals(allBranches)) {
                 this.allBranches = branches;
@@ -370,9 +375,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateEmployeeSpinner() {
+    private void updateEmployeeSpinner(SessionManager sessionManager) {
         if (employees.isEmpty()) return;
-
         int selectedIndex = 0;
         List<String> employeeNames = new ArrayList<>();
         for (int i = 0; i < employees.size(); i++) {
@@ -389,7 +393,21 @@ public class MainActivity extends AppCompatActivity {
         employeeSpinner.setSelection(selectedIndex);
 
         if (selectedEmployee == null) {
-            selectedEmployee = employees.get(0);
+
+            int loggedInKey = sessionManager.getUserEmployeeKey();
+
+            if (loggedInKey != -1) {
+                selectedEmployee = currentWorkforce.findByKey(loggedInKey);
+
+                for (Employee employee : employees) {
+                    if (employee.getEmployeeKey() == loggedInKey) {
+                        selectedEmployee = employee;
+                        break;
+                    }
+                }
+            } else {
+                selectedEmployee = employees.get(0);
+            }
         }
     }
 

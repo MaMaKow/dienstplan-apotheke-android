@@ -24,6 +24,7 @@ import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterDay;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
+import de.mamakow.dienstplanapotheke.model.Workforce;
 
 public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterViewHolder> {
 
@@ -41,10 +42,10 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
         notifyDataSetChanged();
     }
 
-    public void setEmployees(List<Employee> employees) {
+    public void setEmployees(Workforce workforce) {
         employeeMap.clear();
-        if (employees != null) {
-            for (Employee e : employees) {
+        if (workforce != null) {
+            for (Employee e : workforce.getEmployees()) {
                 employeeMap.put(e.getEmployeeKey(), e);
             }
         }

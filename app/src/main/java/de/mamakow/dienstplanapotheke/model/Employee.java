@@ -162,4 +162,5 @@ public class Employee {
     public void setEmployeeLunchBreakMinutes(int employeeLunchBreakMinutes) {
         this.employeeLunchBreakMinutes = employeeLunchBreakMinutes;
     }
+
 }

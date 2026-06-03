@@ -3,6 +3,7 @@ package de.mamakow.dienstplanapotheke.repository;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -10,6 +11,7 @@ import java.util.concurrent.Executors;
 
 import de.mamakow.dienstplanapotheke.database.EmployeeDao;
 import de.mamakow.dienstplanapotheke.model.Employee;
+import de.mamakow.dienstplanapotheke.model.Workforce;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 
@@ -73,7 +75,16 @@ public class EmployeeRepository {
         return employeeDao.getAllEmployees();
     }
 
-    public LiveData<List<Employee>> getAllEmployeesLiveData() {
+    private LiveData<List<Employee>> getAllEmployeesLiveData() {
         return employeeDao.getAllEmployeesLiveData();
+    }
+
+    // Das Repository verwandelt die Liste in eine Workforce
+    public LiveData<Workforce> getWorkforceLiveData() {
+        // Wir nehmen den "Stream" der Liste und mappen ihn auf das Workforce-Objekt
+        return Transformations.map(employeeDao.getAllEmployeesLiveData(), employees -> {
+            Log.d(TAG, "Mapping " + (employees != null ? employees.size() : 0) + " employees to Workforce");
+            return new Workforce(employees);
+        });
     }
 }
