@@ -1,4 +1,4 @@
-package de.mamakow.dienstplanapotheke.viewmodel;
+package de.mamakow.dienstplanapotheke.viewModel;
 
 import android.app.Application;
 import android.util.LongSparseArray;

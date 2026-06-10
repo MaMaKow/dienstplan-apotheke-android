@@ -15,43 +15,47 @@
         android:padding="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <HorizontalScrollView
-            android:layout_width="match_parent"
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/viewModeToggleGroup"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:scrollbars="none">
+            app:checkedButton="@+id/btnEmployeeView"
+            app:selectionRequired="true"
+            app:singleSelection="true">
 
-            <RadioGroup
-                android:id="@+id/viewModeRadioGroup"
+            <Button
+                android:id="@+id/btnEmployeeView"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                app:icon="@drawable/outline_person_24" />
 
-                <RadioButton
-                    android:id="@+id/radioEmployeeView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/mitarbeiter_ansicht" />
+            <Button
+                android:id="@+id/btnBranchView"
 
-                <RadioButton
-                    android:id="@+id/radioBranchView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/filial_ansicht" />
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/outline_domain_24" />
 
-                <RadioButton
-                    android:id="@+id/radioAbsenceView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/abwesenheiten_ansicht" />
+            <Button
+                android:id="@+id/btnAbsenceView"
 
-                <RadioButton
-                    android:id="@+id/radioTeamHeatmapView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/team_heatmap_ansicht" />
-            </RadioGroup>
-        </HorizontalScrollView>
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/md_card_travel_24px" />
+
+            <Button
+                android:id="@+id/btnAbsenceHeatmapView"
+
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/outline_travel_24" />
+
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <LinearLayout
             android:id="@+id/navigationLayout"
@@ -106,14 +110,6 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/currentSelectionTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="4dp"
-            android:text="@string/wochenansicht_fuer_mitarbeiter"
-            android:textStyle="bold" />
     </LinearLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

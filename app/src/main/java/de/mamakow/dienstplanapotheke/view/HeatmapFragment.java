@@ -18,7 +18,7 @@ import java.time.LocalDate;
 
 import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.model.AbsenceDayData;
-import de.mamakow.dienstplanapotheke.viewmodel.HeatmapViewModel;
+import de.mamakow.dienstplanapotheke.viewModel.HeatmapViewModel;
 
 public class HeatmapFragment extends Fragment implements HeatmapAdapter.OnDayClickListener {
 

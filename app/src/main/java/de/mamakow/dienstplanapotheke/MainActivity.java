@@ -11,9 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -24,6 +22,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.button.MaterialButtonToggleGroup;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -53,7 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private View fragmentContainer;
     private RosterAdapter rosterAdapter;
     private AbsenceAdapter absenceAdapter;
-    private RadioGroup viewModeRadioGroup;
+
+    private MaterialButtonToggleGroup viewModeToggleGroup;
     private Button buttonDatePicker;
     private ImageButton buttonPrevDate;
     private ImageButton buttonNextDate;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefreshLayout;
 
-    private TextView currentSelectionTextView;
+
     private LocalDate selectedDate;
     private Branch selectedBranch;
     private Employee selectedEmployee;
@@ -76,11 +77,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Initiales Datum setzen
+        selectedDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
         initViews();
 
-        // Initiales Datum setzen
-        selectedDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
         SessionManager sessionManager = new SessionManager(this);
         if (!sessionManager.isBaseUrlSet()) {
@@ -165,13 +166,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        viewModeRadioGroup = findViewById(R.id.viewModeRadioGroup);
+
+        viewModeToggleGroup = findViewById(R.id.viewModeToggleGroup);
         buttonDatePicker = findViewById(R.id.buttonDatePicker);
         buttonPrevDate = findViewById(R.id.buttonPrevDate);
         buttonNextDate = findViewById(R.id.buttonNextDate);
         branchSpinner = findViewById(R.id.branchSpinner);
         employeeSpinner = findViewById(R.id.employeeSpinner);
-        currentSelectionTextView = findViewById(R.id.currentSelectionTextView);
         recyclerView = findViewById(R.id.recyclerViewRoster);
         fragmentContainer = findViewById(R.id.fragmentContainer);
         progressBar = findViewById(R.id.progressBar);
@@ -181,7 +182,6 @@ public class MainActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         rosterAdapter = new RosterAdapter();
-        absenceAdapter = new AbsenceAdapter();
         recyclerView.setAdapter(rosterAdapter);
     }
 
@@ -198,10 +198,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        viewModel.getWorkforce().observe(this, workforce -> {
-            this.currentWorkforce = workforce;
-            updateEmployeeSpinner(sessionManager);
-        });
+
         viewModel.getBranches().observe(this, branches -> {
             if (branches != null && !branches.equals(allBranches)) {
                 this.allBranches = branches;
@@ -246,21 +243,28 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupListeners() {
         swipeRefreshLayout.setOnRefreshListener(this::refreshData);
-
-        viewModeRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.radioBranchView) {
+        viewModeToggleGroup.addOnButtonCheckedListener((viewModeToggleGroup, checkedId, isChecked) -> {
+            if (!isChecked) {
+                /*
+                 * Damit der Listener nicht sowohl checked als auch unchecked state hier weitergibt.
+                 * Wir interessieren uns nur für den jetzt neu checked state.
+                 */
+                return;
+            }
+            if (checkedId == R.id.btnBranchView) {
                 currentViewMode = ViewMode.BRANCH;
-            } else if (checkedId == R.id.radioAbsenceView) {
+            } else if (checkedId == R.id.btnAbsenceView) {
                 currentViewMode = ViewMode.ABSENCE;
-            } else if (checkedId == R.id.radioTeamHeatmapView) {
+            } else if (checkedId == R.id.btnAbsenceHeatmapView) {
                 currentViewMode = ViewMode.TEAM_HEATMAP;
-            } else {
+            } else { //R.id.btnEmployeeView
                 currentViewMode = ViewMode.EMPLOYEE;
             }
             updateViewModeUI();
             updateUI();
             refreshData();
         });
+
 
         buttonDatePicker.setOnClickListener(v -> {
             DatePickerDialog datePicker = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
@@ -413,24 +417,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateUI() {
         if (currentViewMode == ViewMode.BRANCH) {
-            currentSelectionTextView.setText(String.format("%s%s", getString(R.string.tagesansicht), selectedDate.format(dateFormatter)));
             buttonDatePicker.setText(selectedDate.format(dateFormatter));
             branchSpinner.setVisibility(View.VISIBLE);
             employeeSpinner.setVisibility(View.GONE);
         } else if (currentViewMode == ViewMode.ABSENCE) {
-            currentSelectionTextView.setText(String.format("%s %d", getString(R.string.jahresansicht_abwesenheiten), selectedDate.getYear()));
             buttonDatePicker.setText(String.valueOf(selectedDate.getYear()));
             branchSpinner.setVisibility(View.GONE);
             employeeSpinner.setVisibility(View.VISIBLE);
         } else if (currentViewMode == ViewMode.TEAM_HEATMAP) {
-            currentSelectionTextView.setText(String.format("%s %d", getString(R.string.team_heatmap_title), selectedDate.getYear()));
             buttonDatePicker.setText(String.valueOf(selectedDate.getYear()));
             branchSpinner.setVisibility(View.GONE);
             employeeSpinner.setVisibility(View.GONE);
         } else {
             LocalDate monday = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             LocalDate sunday = monday.plusDays(6);
-            currentSelectionTextView.setText(String.format("%s%s - %s", getString(R.string.wochenansicht_mitarbeiter), monday.format(dateFormatter), sunday.format(dateFormatter)));
             buttonDatePicker.setText(String.format("%s%s", getString(R.string.woche_vom), monday.format(dateFormatter)));
             branchSpinner.setVisibility(View.GONE);
             employeeSpinner.setVisibility(View.VISIBLE);
