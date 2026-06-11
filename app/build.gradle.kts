@@ -1,12 +1,10 @@
 plugins {
-    //alias(libs.plugins.android.application)
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "de.mamakow.dienstplanapotheke"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "de.mamakow.dienstplanapotheke"
@@ -31,9 +29,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions {
-        jvmTarget = "21"
-    }
 }
 
 dependencies {
@@ -51,7 +46,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.arch.core.testing)
-    //implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
     implementation(libs.dotenv)
     // Retrofit
