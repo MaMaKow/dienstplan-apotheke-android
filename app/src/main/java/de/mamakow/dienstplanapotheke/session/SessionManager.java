@@ -2,8 +2,13 @@ package de.mamakow.dienstplanapotheke.session;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Base64;
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -140,11 +145,31 @@ public class SessionManager {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(TOKEN_KEY, token);
         editor.apply();
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         Log.d(TAG, "Token in SharedPreferences gespeichert: " + (token != null ? "vorhanden" : "null"));
+        Log.d(TAG, "Token:" + token);
+        logTokenContent(token);
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+
+
     }
 
     public boolean isNotLoggedIn() {
         String token = getSessionToken();
+        Log.d(TAG, "Token: " + token);
+        logTokenContent(token);
         boolean loggedIn = token != null && !token.isEmpty();
         Log.d(TAG, "Check Login-Status: " + (loggedIn ? "Eingeloggt" : "NICHT eingeloggt"));
         return !loggedIn;
@@ -191,5 +216,56 @@ public class SessionManager {
         editor.remove(USER_EMAIL_KEY);
         editor.remove(USER_PRIVILEGES_KEY);
         editor.apply();
+    }
+
+    private void logTokenContent(String token) {
+        if (token == null || !token.contains(".")) {
+            Log.w(TAG, "Token ist null oder hat kein gültiges JWT Format.");
+            return;
+        }
+
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) return;
+
+            // Payload dekodieren
+            byte[] decodedBytes = Base64.decode(parts[1], Base64.URL_SAFE);
+            String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+            Log.d(TAG, "Token Payload Rohdaten: " + decodedString);
+
+            // JSON parsen
+            JsonObject jsonObject = new Gson().fromJson(decodedString, JsonObject.class);
+
+            // Sicher auslesen mit Hilfsvariablen
+            if (jsonObject.has("userName")) {
+                Log.d(TAG, "Username: " + jsonObject.get("userName").getAsString());
+            }
+
+            if (jsonObject.has("userPrimaryKey")) {
+                Log.d(TAG, "User ID: " + jsonObject.get("userPrimaryKey").getAsInt());
+            }
+
+            if (jsonObject.has("expires")) {
+                long expiresSeconds = jsonObject.get("expires").getAsLong();
+
+                // Zeitstempel umwandeln (mit ZoneOffset System Default)
+                java.time.Instant instant = java.time.Instant.ofEpochSecond(expiresSeconds);
+                java.time.LocalDateTime expiresDateTime = java.time.LocalDateTime.ofInstant(
+                        instant, java.time.ZoneId.systemDefault());
+
+                java.time.format.DateTimeFormatter formatter =
+                        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                Log.d(TAG, "Ablaufdatum (lokal): " + expiresDateTime.format(formatter));
+
+                // Prüfen ob abgelaufen
+                if (expiresDateTime.isBefore(java.time.LocalDateTime.now())) {
+                    Log.w(TAG, "WARNUNG: Der Token ist bereits abgelaufen!");
+                }
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Fehler beim Analysieren des Tokens: " + e.getMessage());
+        }
     }
 }
