@@ -328,7 +328,12 @@ public class MainActivity extends AppCompatActivity {
         employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Employee newSelection = currentWorkforce.getEmployees().get(position); // CAVE: Is this index safely equal to the spinner index?
+                /*
+                 * CAVE: The index of  currentWorkforce.getEmployees().get() is safely equal
+                 * to the spinner index (position), only as long as the
+                 * spinner is always updated at the same time as the workforce.
+                 */
+                Employee newSelection = currentWorkforce.getEmployees().get(position);
                 if (selectedEmployee == null || selectedEmployee.getEmployeeKey() != newSelection.getEmployeeKey()) {
                     selectedEmployee = newSelection;
                     updateUI();

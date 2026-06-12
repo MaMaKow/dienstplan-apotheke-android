@@ -30,10 +30,10 @@ public class SessionManager {
     private static final String USER_EMAIL_KEY = "user_email";
     private static final String USER_EMPLOYEE_KEY = "user_employee_key";
     private static final String USER_PRIVILEGES_KEY = "user_privileges";
-
     private final SharedPreferences sharedPreferences;
     private final NetworkHandler networkHandler;
     private final Context context;
+    private boolean loginIsRunning = false;
 
     public SessionManager(Context context) {
         this.context = context;
@@ -53,10 +53,17 @@ public class SessionManager {
     }
 
     public void performLogin(String userName, String userPassphrase, LoginCallback callback) {
+        synchronized (this) {
+            if (loginIsRunning) {
+                return;
+            }
+        }
+        loginIsRunning = true;
         Log.d(TAG, "performLogin gestartet für User: " + userName);
         networkHandler.login(userName, userPassphrase, new LoginCallback() {
             @Override
             public void onSuccess(String token) {
+                loginIsRunning = false;
                 saveToken(token);
                 saveCredentials(userName, userPassphrase);
                 Log.i(TAG, "Login erfolgreich. Token erhalten und gespeichert. Lade Benutzerdaten...");
@@ -67,6 +74,7 @@ public class SessionManager {
 
             @Override
             public void onFailure(Exception exception) {
+                loginIsRunning = false;
                 Log.e(TAG, "Login fehlgeschlagen: " + exception.getMessage(), exception);
                 if (callback != null) callback.onFailure(exception);
             }
