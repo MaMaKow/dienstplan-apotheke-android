@@ -54,6 +54,13 @@
                 android:layout_height="wrap_content"
                 app:icon="@drawable/outline_travel_24" />
 
+            <Button
+                android:id="@+id/btnLogout"
+
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/outline_logout_24" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
 

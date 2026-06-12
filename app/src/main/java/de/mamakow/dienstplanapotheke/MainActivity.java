@@ -1,6 +1,7 @@
 package de.mamakow.dienstplanapotheke;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private Employee selectedEmployee;
 
     private List<Branch> allBranches = new ArrayList<>();
-    private List<Employee> employees = new ArrayList<>();
+
     private Workforce currentWorkforce;
     private ViewMode currentViewMode = ViewMode.EMPLOYEE;
 
@@ -257,6 +258,15 @@ public class MainActivity extends AppCompatActivity {
                 currentViewMode = ViewMode.ABSENCE;
             } else if (checkedId == R.id.btnAbsenceHeatmapView) {
                 currentViewMode = ViewMode.TEAM_HEATMAP;
+            } else if (checkedId == R.id.btnLogout) {
+                SessionManager sessionManager = new SessionManager(this);
+                sessionManager.logout();
+                Intent intent = new Intent(this, MainActivity.class);
+                // 2. Clear the activity stack so the user can't "Back" into the logged-in state
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+                return; // Important: prevent the rest of the listener from running
             } else { //R.id.btnEmployeeView
                 currentViewMode = ViewMode.EMPLOYEE;
             }
@@ -318,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
         employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Employee newSelection = employees.get(position);
+                Employee newSelection = currentWorkforce.getEmployees().get(position); // CAVE: Is this index safely equal to the spinner index?
                 if (selectedEmployee == null || selectedEmployee.getEmployeeKey() != newSelection.getEmployeeKey()) {
                     selectedEmployee = newSelection;
                     updateUI();
@@ -380,14 +390,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateEmployeeSpinner(SessionManager sessionManager) {
-        if (employees.isEmpty()) return;
+        List<Employee> employees = currentWorkforce.getEmployees();
+        if (employees.isEmpty()) {
+            Log.d(TAG, "updateEmployeeSpinner: employees is empty");
+            return;
+        }
+
         int selectedIndex = 0;
         List<String> employeeNames = new ArrayList<>();
         for (int i = 0; i < employees.size(); i++) {
             Employee employee = employees.get(i);
             employeeNames.add(employee.getEmployeeFullName());
+            Log.d(TAG, "Add Employee to employeeNames in updateEmployeeSpinner()" + employee.getEmployeeFullName());
             if (selectedEmployee != null && employee.getEmployeeKey() == selectedEmployee.getEmployeeKey()) {
+                Log.d(TAG, "selectedEmployee: " + employee.getEmployeeKey() + " matches employee.getEmployeeKey(): " + selectedEmployee.getEmployeeKey());
+                Log.d(TAG, "Set selectedIndex to " + i);
                 selectedIndex = i;
+            } else {
+                Log.d(TAG, "selectedEmployee: " + selectedEmployee + " does not match employee.getEmployeeKey(): " + employee.getEmployeeKey());
             }
         }
 
@@ -397,9 +417,9 @@ public class MainActivity extends AppCompatActivity {
         employeeSpinner.setSelection(selectedIndex);
 
         if (selectedEmployee == null) {
-
+            Log.d(TAG, "selectedEmployee is null, setting it to logged in employee ");
             int loggedInKey = sessionManager.getUserEmployeeKey();
-
+            Log.d(TAG, "loggedInKey: " + loggedInKey);
             if (loggedInKey != -1) {
                 selectedEmployee = currentWorkforce.findByKey(loggedInKey);
 
@@ -410,8 +430,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             } else {
+                Log.d(TAG, "selectedEmployee is null, setting it to first employee in list");
                 selectedEmployee = employees.get(0);
             }
+            Log.d(TAG, "selectedEmployee = " + selectedEmployee.getEmployeeFullName());
         }
     }
 

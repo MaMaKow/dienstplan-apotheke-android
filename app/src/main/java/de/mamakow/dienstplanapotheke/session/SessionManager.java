@@ -118,7 +118,11 @@ public class SessionManager {
             editor.putStringSet(USER_PRIVILEGES_KEY, new HashSet<>(userData.getPrivileges()));
         }
         editor.apply();
-        Log.d(TAG, "Vollständige User-Daten gespeichert: " + userData.getUserName());
+        Log.d(TAG, "Vollständige User-Daten gespeichert user name: " + userData.getUserName());
+        Log.d(TAG, "employee key: " + userData.getEmployeeKey());
+        Log.d(TAG, "email: " + userData.getEmail());
+        Log.d(TAG, "userId: " + userData.getId());
+        Log.d(TAG, "Privileges" + userData.getPrivileges());
     }
 
     public int getUserId() {
@@ -126,7 +130,7 @@ public class SessionManager {
     }
 
     public int getUserEmployeeKey() {
-        return sharedPreferences.getInt("employee_key", -1);
+        return sharedPreferences.getInt(USER_EMPLOYEE_KEY, -1);
     }
 
     public String getUserDisplayName() {
