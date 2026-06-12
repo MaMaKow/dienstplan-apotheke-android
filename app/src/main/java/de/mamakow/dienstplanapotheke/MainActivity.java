@@ -183,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         rosterAdapter = new RosterAdapter();
+        absenceAdapter = new AbsenceAdapter();
         recyclerView.setAdapter(rosterAdapter);
     }
 
@@ -457,7 +458,6 @@ public class MainActivity extends AppCompatActivity {
             employeeSpinner.setVisibility(View.GONE);
         } else {
             LocalDate monday = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-            LocalDate sunday = monday.plusDays(6);
             buttonDatePicker.setText(String.format("%s%s", getString(R.string.woche_vom), monday.format(dateFormatter)));
             branchSpinner.setVisibility(View.GONE);
             employeeSpinner.setVisibility(View.VISIBLE);
