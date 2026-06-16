@@ -70,6 +70,7 @@ public class SessionManager {
 
                 // Nach erfolgreichem Login: Benutzerdaten laden
                 fetchAndSaveCurrentUser(token, callback);
+                Log.i(TAG, "Benutzerdaten vermutlich erfolgreich geladen und gespeichert.");
             }
 
             @Override
@@ -82,10 +83,12 @@ public class SessionManager {
     }
 
     public void fetchAndSaveCurrentUser(String token, LoginCallback callback) {
+        Log.d(TAG, "Starte fetchAndSaveCurrentUser...");
         RetrofitNetworkHandler retrofitHandler = new RetrofitNetworkHandler(context);
         retrofitHandler.fetchCurrentUser(token, new RetrofitNetworkHandler.NetworkResponseCallback<UserData>() {
             @Override
             public void onSuccess(UserData userData) {
+                Log.d(TAG, "Benutzerdaten erfolgreich geladen.");
                 saveFullUserData(userData);
                 Log.i(TAG, "Benutzerdaten erfolgreich geladen und gespeichert.");
                 if (callback != null) callback.onSuccess(token);
@@ -117,6 +120,7 @@ public class SessionManager {
     }
 
     public void saveFullUserData(UserData userData) {
+        Log.d(TAG, "Starte saveFullUserData...");
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt(USER_ID_KEY, userData.getId());
         editor.putString(USER_DISPLAY_NAME_KEY, userData.getUserName());
@@ -156,7 +160,7 @@ public class SessionManager {
     public void saveToken(String token) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(TOKEN_KEY, token);
-        editor.apply();
+        editor.commit(); // Immediate commit to storage, not using .apply()!
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
@@ -166,7 +170,7 @@ public class SessionManager {
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         Log.d(TAG, "Token in SharedPreferences gespeichert: " + (token != null ? "vorhanden" : "null"));
         Log.d(TAG, "Token:" + token);
-        logTokenContent(token);
+        logTokenContent(sharedPreferences.getString(TOKEN_KEY, null));
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
@@ -230,6 +234,23 @@ public class SessionManager {
         editor.apply();
     }
 
+    /**
+     * Lädt die Benutzerdaten basierend auf dem gespeicherten Token nach.
+     */
+    public void refreshSessionUserData(LoginCallback callback) {
+        String token = getSessionToken();
+        if (token != null) {
+            fetchAndSaveCurrentUser(token, callback);
+        } else {
+            if (callback != null) callback.onFailure(new Exception("Kein Token vorhanden"));
+        }
+    }
+
+    public boolean hasUserData() {
+        // Prüfen, ob wir eine gültige User-ID oder einen EmployeeKey haben
+        return sharedPreferences.getInt(USER_ID_KEY, -1) != -1;
+    }
+
     private void logTokenContent(String token) {
         if (token == null || !token.contains(".")) {
             Log.w(TAG, "Token ist null oder hat kein gültiges JWT Format.");
@@ -257,8 +278,8 @@ public class SessionManager {
                 Log.d(TAG, "User ID: " + jsonObject.get("userPrimaryKey").getAsInt());
             }
 
-            if (jsonObject.has("expires")) {
-                long expiresSeconds = jsonObject.get("expires").getAsLong();
+            if (jsonObject.has("exp")) {
+                long expiresSeconds = jsonObject.get("exp").getAsLong();
 
                 // Zeitstempel umwandeln (mit ZoneOffset System Default)
                 java.time.Instant instant = java.time.Instant.ofEpochSecond(expiresSeconds);

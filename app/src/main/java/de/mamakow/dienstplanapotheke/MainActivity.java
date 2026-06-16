@@ -96,7 +96,28 @@ public class MainActivity extends AppCompatActivity {
         if (sessionManager.isNotLoggedIn()) {
             showLoginDialog(sessionManager);
         } else {
-            proceedWithInitialization(sessionManager);
+            Log.d(TAG, "checkLoginAndProceed: Login token vorhanden, prüfe auf User Data.");
+            if (!sessionManager.hasUserData()) {
+                Log.d(TAG, "checkLoginAndProceed: Login token vorhanden, User Data fehlt aber.");
+                // Token ist da, aber Details fehlen (z.B. nach App-Neustart)
+                sessionManager.refreshSessionUserData(new LoginCallback() {
+                    @Override
+                    public void onSuccess(String token) {
+                        // Jetzt erst die restlichen Daten laden,
+                        // damit der richtige Mitarbeiter vorselektiert wird
+                        proceedWithInitialization(sessionManager);
+                    }
+
+                    @Override
+                    public void onFailure(Exception exception) {
+                        // Fehlerbehandlung
+                        Log.e(TAG, "Fehler beim Laden der Benutzerdaten: " + exception.getLocalizedMessage());
+                    }
+                });
+            } else {
+                Log.d(TAG, "checkLoginAndProceed: Login token vorhanden, User Data war auch da.");
+                proceedWithInitialization(sessionManager);
+            }
         }
     }
 

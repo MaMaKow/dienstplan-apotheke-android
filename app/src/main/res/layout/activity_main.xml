@@ -17,8 +17,9 @@
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/viewModeToggleGroup"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             app:checkedButton="@+id/btnEmployeeView"
             app:selectionRequired="true"
             app:singleSelection="true">
@@ -28,6 +29,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="0dp"
                 app:icon="@drawable/outline_person_24" />
 
             <Button
@@ -36,6 +38,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="0dp"
                 app:icon="@drawable/outline_domain_24" />
 
             <Button
@@ -44,6 +47,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="0dp"
                 app:icon="@drawable/md_card_travel_24px" />
 
             <Button
@@ -52,6 +56,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="0dp"
                 app:icon="@drawable/outline_travel_24" />
 
             <Button
@@ -60,6 +65,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="0dp"
                 app:icon="@drawable/outline_logout_24" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
