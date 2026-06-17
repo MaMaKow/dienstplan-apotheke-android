@@ -49,7 +49,7 @@ public class NetworkHandler {
 
         // GET to receive roster data
         Request get = new Request.Builder()
-                .url(getRestBaseUrl() + "roster/GET-roster.php")
+                .url(getRestBaseUrl() + "rosters")
                 .addHeader("Authorization", "Bearer " + token)
                 .build();
 
@@ -92,7 +92,7 @@ public class NetworkHandler {
         final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
         RequestBody postBody = RequestBody.create(postData.toString(), JSON);
         Request post = new Request.Builder()
-                .url(getRestBaseUrl() + "authentication/POST-authenticate.php")
+                .url(getRestBaseUrl() + "auth/login")
                 .post(postBody)
                 .build();
 
@@ -112,7 +112,7 @@ public class NetworkHandler {
                     String responseData = responseBody.string();
                     // Using new JsonParser().parse() for compatibility with older GSON versions.
                     // parseString() was introduced in Gson 2.8.6 as a static method.
-                    JsonObject jsonObject = new JsonParser().parse(responseData).getAsJsonObject();
+                    JsonObject jsonObject = JsonParser.parseString(responseData).getAsJsonObject();
                     if (jsonObject.has("accessToken")) {
                         String token = jsonObject.get("accessToken").getAsString();
                         Log.d(TAG, "Found token in json: " + token);

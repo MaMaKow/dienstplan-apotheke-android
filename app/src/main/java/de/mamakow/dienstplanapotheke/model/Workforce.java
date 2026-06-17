@@ -20,6 +20,15 @@ public class Workforce {
         return null;
     }
 
+    public List<String> getEmployeeNames() {
+        List<String> employeeNames = new ArrayList<>();
+        for (int i = 0; i < listOfEmployees.size(); i++) {
+            Employee employee = listOfEmployees.get(i);
+            employeeNames.add(employee.getEmployeeFullName());
+        }
+        return employeeNames;
+    }
+
     public List<Employee> getEmployees() {
         return listOfEmployees;
     }

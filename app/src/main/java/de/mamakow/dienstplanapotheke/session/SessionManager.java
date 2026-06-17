@@ -9,10 +9,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
 
 import de.mamakow.dienstplanapotheke.R;
+import de.mamakow.dienstplanapotheke.model.Privileges;
 import de.mamakow.dienstplanapotheke.model.UserData;
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.network.NetworkHandler;
@@ -127,7 +126,8 @@ public class SessionManager {
         editor.putString(USER_EMAIL_KEY, userData.getEmail());
         editor.putInt(USER_EMPLOYEE_KEY, userData.getEmployeeKey() != null ? userData.getEmployeeKey() : -1);
         if (userData.getPrivileges() != null) {
-            editor.putStringSet(USER_PRIVILEGES_KEY, new HashSet<>(userData.getPrivileges()));
+            String privilegesJson = new Gson().toJson(userData.getPrivileges());
+            editor.putString(USER_PRIVILEGES_KEY, privilegesJson);
         }
         editor.apply();
         Log.d(TAG, "Vollständige User-Daten gespeichert user name: " + userData.getUserName());
@@ -153,8 +153,10 @@ public class SessionManager {
         return sharedPreferences.getString(USER_EMAIL_KEY, "");
     }
 
-    public Set<String> getUserPrivileges() {
-        return sharedPreferences.getStringSet(USER_PRIVILEGES_KEY, new HashSet<>());
+    public Privileges getUserPrivileges() {
+        String json = sharedPreferences.getString(USER_PRIVILEGES_KEY, null);
+        if (json == null) return new Privileges(); // oder null
+        return new Gson().fromJson(json, Privileges.class);
     }
 
     public void saveToken(String token) {
@@ -206,7 +208,7 @@ public class SessionManager {
 
     public String getBaseUrl() {
         String url = sharedPreferences.getString(BASE_URL_KEY, "");
-        if (url == null || url.trim().isEmpty()) {
+        if (url.trim().isEmpty()) {
             return context.getString(R.string.test_page_url);
         }
         return url;

@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Workforce currentWorkforce;
     private ViewMode currentViewMode = ViewMode.EMPLOYEE;
+    private boolean isInitialDropdownSetup = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -350,14 +351,23 @@ public class MainActivity extends AppCompatActivity {
         employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(TAG, "onItemSelected(position=" + position + ", initial=" + isInitialDropdownSetup + ")");
                 /*
                  * CAVE: The index of  currentWorkforce.getEmployees().get() is safely equal
                  * to the spinner index (position), only as long as the
                  * spinner is always updated at the same time as the workforce.
                  */
+                if (isInitialDropdownSetup) {
+                    isInitialDropdownSetup = false;
+                    // Optional: Hier prüfen, ob die Position bereits dem eingeloggten User entspricht
+                    return;
+                }
                 Employee newSelection = currentWorkforce.getEmployees().get(position);
+                Log.d(TAG, "selectedEmployee ALT = " + (selectedEmployee == null ? "null" : selectedEmployee.getEmployeeFullName()));
+
                 if (selectedEmployee == null || selectedEmployee.getEmployeeKey() != newSelection.getEmployeeKey()) {
                     selectedEmployee = newSelection;
+                    Log.d(TAG, "selectedEmployee NEU = " + newSelection.getEmployeeFullName());
                     updateUI();
                     if (currentViewMode == ViewMode.ABSENCE) {
                         observeAbsences();
@@ -417,18 +427,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateEmployeeSpinner(SessionManager sessionManager) {
+        Log.d(TAG, "updateEmployeeSpinner() BEGIN");
         List<Employee> employees = currentWorkforce.getEmployees();
         if (employees.isEmpty()) {
             Log.d(TAG, "updateEmployeeSpinner: employees is empty");
             return;
         }
-
+        if (selectedEmployee == null) {
+            Log.d(TAG, "selectedEmployee is null, setting it to logged in employee ");
+            int loggedInKey = sessionManager.getUserEmployeeKey();
+            Log.d(TAG, "loggedInKey: " + loggedInKey);
+            if (loggedInKey != -1) {
+                selectedEmployee = currentWorkforce.findByKey(loggedInKey);
+                Log.d(TAG, "Trigger refreshData after initial employee selection");
+                refreshData();
+            } else {
+                Log.d(TAG, "selectedEmployee is null, setting it to first employee in list");
+                selectedEmployee = employees.get(0);
+                refreshData();
+            }
+            Log.d(TAG, "selectedEmployee = " + selectedEmployee.getEmployeeFullName());
+        }
         int selectedIndex = 0;
-        List<String> employeeNames = new ArrayList<>();
+        List<String> employeeNames = currentWorkforce.getEmployeeNames();
         for (int i = 0; i < employees.size(); i++) {
             Employee employee = employees.get(i);
-            employeeNames.add(employee.getEmployeeFullName());
-            Log.d(TAG, "Add Employee to employeeNames in updateEmployeeSpinner()" + employee.getEmployeeFullName());
             if (selectedEmployee != null && employee.getEmployeeKey() == selectedEmployee.getEmployeeKey()) {
                 Log.d(TAG, "selectedEmployee: " + employee.getEmployeeKey() + " matches employee.getEmployeeKey(): " + selectedEmployee.getEmployeeKey());
                 Log.d(TAG, "Set selectedIndex to " + i);
@@ -440,28 +463,11 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, employeeNames);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        Log.d(TAG, "selectedEmployee vorher = " + selectedEmployee);
         employeeSpinner.setAdapter(spinnerAdapter);
-        employeeSpinner.setSelection(selectedIndex);
-
-        if (selectedEmployee == null) {
-            Log.d(TAG, "selectedEmployee is null, setting it to logged in employee ");
-            int loggedInKey = sessionManager.getUserEmployeeKey();
-            Log.d(TAG, "loggedInKey: " + loggedInKey);
-            if (loggedInKey != -1) {
-                selectedEmployee = currentWorkforce.findByKey(loggedInKey);
-
-                for (Employee employee : employees) {
-                    if (employee.getEmployeeKey() == loggedInKey) {
-                        selectedEmployee = employee;
-                        break;
-                    }
-                }
-            } else {
-                Log.d(TAG, "selectedEmployee is null, setting it to first employee in list");
-                selectedEmployee = employees.get(0);
-            }
-            Log.d(TAG, "selectedEmployee = " + selectedEmployee.getEmployeeFullName());
-        }
+        Log.d(TAG, "Adapter gesetzt");
+        employeeSpinner.setSelection(selectedIndex, false);
+        Log.d(TAG, "Selection gesetzt: " + selectedIndex);
     }
 
     private void updateUI() {
