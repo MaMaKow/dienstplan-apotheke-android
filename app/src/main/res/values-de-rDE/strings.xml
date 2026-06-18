@@ -19,4 +19,5 @@
     <string name="password_hint">Passwort</string>
     <string name="login_button">Einloggen</string>
     <string name="login_failed">Login fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.</string>
+    <string name="kommentar">Kommentar</string>
 </resources>

@@ -41,6 +41,7 @@ import de.mamakow.dienstplanapotheke.model.Workforce;
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import de.mamakow.dienstplanapotheke.view.AbsenceAdapter;
+import de.mamakow.dienstplanapotheke.view.BranchRosterAdapter;
 import de.mamakow.dienstplanapotheke.view.HeatmapFragment;
 import de.mamakow.dienstplanapotheke.view.RosterAdapter;
 import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
@@ -53,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private View fragmentContainer;
     private RosterAdapter rosterAdapter;
+    private BranchRosterAdapter branchRosterAdapter;
+
     private AbsenceAdapter absenceAdapter;
 
     private MaterialButtonToggleGroup viewModeToggleGroup;
@@ -205,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         rosterAdapter = new RosterAdapter();
+        branchRosterAdapter = new BranchRosterAdapter();
         absenceAdapter = new AbsenceAdapter();
         recyclerView.setAdapter(rosterAdapter);
     }
@@ -215,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getWorkforce().observe(this, workforce -> {
             if (workforce != null) {
                 this.currentWorkforce = workforce;
-                rosterAdapter.setEmployees(workforce);
+                branchRosterAdapter.setEmployees(workforce);
                 updateEmployeeSpinner(sessionManager);
                 if (currentViewMode == ViewMode.ABSENCE) {
                     observeAbsences();
@@ -232,9 +236,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         viewModel.getRoster().observe(this, roster -> {
-            if (roster != null && currentViewMode != ViewMode.ABSENCE && currentViewMode != ViewMode.TEAM_HEATMAP) {
+            if (roster != null && currentViewMode == ViewMode.EMPLOYEE) {
                 Log.d(TAG, "Dienstplan-Update: " + roster.getRosterDays().size() + " Tage angezeigt.");
                 rosterAdapter.setRosterDays(roster.getRosterDays());
+            }
+            if (roster != null && currentViewMode == ViewMode.BRANCH) {
+                Log.d(TAG, "Dienstplan-Update für branchRosterAdapter.");
+                branchRosterAdapter.setRosterDays(roster.getRosterDays());
             }
         });
 
@@ -392,6 +400,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (currentViewMode == ViewMode.ABSENCE) {
             recyclerView.setAdapter(absenceAdapter);
             observeAbsences();
+        } else if (currentViewMode == ViewMode.BRANCH) {
+            recyclerView.setAdapter(branchRosterAdapter);
         } else {
             recyclerView.setAdapter(rosterAdapter);
         }
