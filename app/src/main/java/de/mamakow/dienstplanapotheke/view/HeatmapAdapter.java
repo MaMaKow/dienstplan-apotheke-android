@@ -100,7 +100,7 @@ public class HeatmapAdapter extends ListAdapter<AbsenceMonthData, HeatmapAdapter
                 TextView tv = new TextView(context);
                 tv.setText(day);
                 tv.setTextSize(12);
-                tv.setTextColor(ContextCompat.getColor(context, R.color.heatmap_text_gray));
+                tv.setTextColor(ContextCompat.getColor(context, R.color.md_theme_background));
                 tv.setGravity(Gravity.CENTER);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
                 tv.setLayoutParams(lp);
@@ -149,24 +149,34 @@ public class HeatmapAdapter extends ListAdapter<AbsenceMonthData, HeatmapAdapter
                 dayView.setTextSize(14);
 
                 AbsenceDayData data = monthData.getDayDataMap().get(date.toEpochDay());
-                int colorRes = R.color.heatmap_0;
+                int bgColorRes = R.color.md_theme_surfaceContainer;
+                int textColorRes = R.color.md_theme_onSurface;
+
                 if (data != null) {
                     int count = data.getCount();
                     int pharmacists = data.getPharmacistCount();
 
                     if (pharmacists >= 3 || count >= 4) {
-                        colorRes = R.color.heatmap_4_plus;
+                        bgColorRes = R.color.md_theme_errorContainer;
+                        textColorRes = R.color.md_theme_onErrorContainer;
                     } else if (pharmacists >= 2 || count >= 3) {
-                        colorRes = R.color.heatmap_3;
+                        // Nutze Secondary (Mittelwert)
+                        bgColorRes = R.color.md_theme_secondaryContainer;
+                        textColorRes = R.color.md_theme_onSecondaryContainer;
                     } else if (count == 2) {
-                        colorRes = R.color.heatmap_2;
+                        // Nutze Tertiary (Auffällig, aber nicht kritisch)
+                        bgColorRes = R.color.md_theme_tertiaryContainer;
+                        textColorRes = R.color.md_theme_onTertiaryContainer;
                     } else if (count == 1) {
-                        colorRes = R.color.heatmap_1;
+                        // Nutze Primary (Leichte Abwesenheit)
+                        bgColorRes = R.color.md_theme_primaryContainer;
+                        textColorRes = R.color.md_theme_onPrimaryContainer;
                     }
                 }
 
-                dayView.setBackgroundColor(ContextCompat.getColor(context, colorRes));
-
+                dayView.setBackgroundColor(ContextCompat.getColor(context, bgColorRes));
+                dayView.setTextColor(ContextCompat.getColor(context, textColorRes));
+                
                 GridLayout.LayoutParams params = new GridLayout.LayoutParams();
                 params.width = cellSize;
                 params.height = cellSize;

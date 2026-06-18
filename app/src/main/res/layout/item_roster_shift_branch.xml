@@ -41,7 +41,7 @@
                 android:layout_toStartOf="@id/textViewShiftTime"
                 android:layout_toEndOf="@id/textViewEmployeeName"
                 android:contentDescription="@string/employee_profession_icon"
-                app:tint="@color/profession_icon_tint" />
+                app:tint="@color/md_theme_onSurfaceVariant" />
 
             <TextView
                 android:id="@+id/textViewShiftTime"

@@ -26,47 +26,56 @@
 
             <Button
                 android:id="@+id/btnEmployeeView"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minWidth="0dp"
-                app:icon="@drawable/outline_person_24" />
+                app:icon="@drawable/outline_person_24"
+                app:iconSize="48dp" />
 
             <Button
                 android:id="@+id/btnBranchView"
 
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minWidth="0dp"
-                app:icon="@drawable/outline_domain_24" />
+                app:icon="@drawable/outline_domain_24"
+                app:iconSize="48dp" />
 
             <Button
                 android:id="@+id/btnAbsenceView"
 
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minWidth="0dp"
-                app:icon="@drawable/md_card_travel_24px" />
+                app:icon="@drawable/md_card_travel_24px"
+                app:iconSize="48dp" />
 
             <Button
                 android:id="@+id/btnAbsenceHeatmapView"
 
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minWidth="0dp"
-                app:icon="@drawable/outline_travel_24" />
+                app:icon="@drawable/outline_travel_24"
+                app:iconSize="48dp" />
 
             <Button
                 android:id="@+id/btnLogout"
 
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minWidth="0dp"
-                app:icon="@drawable/outline_logout_24" />
+                app:icon="@drawable/outline_logout_24"
+                app:iconSize="48dp" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -92,7 +101,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/datum_waehlen" />
+                android:text="@string/datum_waehlen"
+                android:textSize="20sp" />
 
             <ImageButton
                 android:id="@+id/buttonNextDate"

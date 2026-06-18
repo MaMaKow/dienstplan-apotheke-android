@@ -116,20 +116,33 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
                 if (employee != null) {
                     String profession = employee.getEmployeeProfession();
                     int backgroundColor = android.graphics.Color.WHITE; // Standard
+                    int fontColor = itemView.getContext().getColor(R.color.md_theme_onSurface);
 
                     if ("Apotheker".equalsIgnoreCase(profession)) {
-                        backgroundColor = itemView.getContext().getColor(R.color.highlight_pharmacist);
+                        backgroundColor = itemView.getContext().getColor(R.color.md_theme_primaryContainer);
+                        fontColor = itemView.getContext().getColor(R.color.md_theme_onPrimaryContainer);
                         cardView.setStrokeWidth(4); // Stärkere Umrandung
                     } else if ("Pharmazieingenieur".equalsIgnoreCase(profession) || "PI".equalsIgnoreCase(profession)) {
-                        backgroundColor = itemView.getContext().getColor(R.color.highlight_engineer);
+                        backgroundColor = itemView.getContext().getColor(R.color.md_theme_secondaryContainer);
+                        fontColor = itemView.getContext().getColor(R.color.md_theme_onSecondaryContainer);
                         cardView.setStrokeWidth(4);
                     } else if ("PTA".equalsIgnoreCase(profession)) {
+                        backgroundColor = itemView.getContext().getColor(R.color.md_theme_tertiaryContainer);
+                        fontColor = itemView.getContext().getColor(R.color.md_theme_onTertiaryContainer);
+
                         cardView.setStrokeWidth(1);
                     } else {
                         // Nichtpharmazeutisches Personal:
                         cardView.setStrokeWidth(1);
                     }
+                    // 1. Set the background of the card
                     cardView.setCardBackgroundColor(backgroundColor);
+
+                    // 2. Set the text color of each individual TextView
+                    textViewEmployeeName.setTextColor(fontColor);
+                    textViewShiftTime.setTextColor(fontColor);
+                    textViewPause.setTextColor(fontColor);
+                    textViewComment.setTextColor(fontColor);
                 }
                 layoutRosterItems.addView(subItemView);
             }
