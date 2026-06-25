@@ -35,7 +35,6 @@
 
             <Button
                 android:id="@+id/btnBranchView"
-
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -46,7 +45,6 @@
 
             <Button
                 android:id="@+id/btnAbsenceView"
-
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -57,7 +55,6 @@
 
             <Button
                 android:id="@+id/btnAbsenceHeatmapView"
-
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -67,8 +64,17 @@
                 app:iconSize="48dp" />
 
             <Button
-                android:id="@+id/btnLogout"
+                android:id="@+id/btnOvertimeView"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                app:icon="@drawable/watch_overtime"
+                app:iconSize="48dp" />
 
+            <Button
+                android:id="@+id/btnLogout"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -131,6 +137,7 @@
                 android:id="@+id/employeeSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="28sp"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>

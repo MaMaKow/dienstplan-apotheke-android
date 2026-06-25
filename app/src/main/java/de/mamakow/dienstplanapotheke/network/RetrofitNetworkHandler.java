@@ -20,6 +20,7 @@ import java.util.List;
 import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Employee;
+import de.mamakow.dienstplanapotheke.model.Overtime;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 import de.mamakow.dienstplanapotheke.model.UserData;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
@@ -227,6 +228,22 @@ public class RetrofitNetworkHandler {
         });
     }
 
+    public void fetchEmployeeOvertimes(int employeeKey, String token, NetworkResponseCallback<List<Overtime>> callback) {
+        Log.i(TAG, "fetchOvertimes() gestartet");
+        rosterApi.getEmployeeOvertimes("Bearer " + token, employeeKey).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Overtime>>() {
+                }.getType(), callback);
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
     public void fetchAbsencesByYear(String token, int year, NetworkResponseCallback<List<Absence>> callback) {
         Log.i(TAG, "fetchAbsencesByYear() gestartet für Jahr: " + year);
         rosterApi.getAbsencesByYear("Bearer " + token, year).enqueue(new Callback<JsonElement>() {
@@ -249,6 +266,22 @@ public class RetrofitNetworkHandler {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Absence>>() {
+                }.getType(), callback);
+            }
+
+            @Override
+            public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
+    public void fetchEmployeeOvertimes(String token, int employeeKey, NetworkResponseCallback<List<Overtime>> callback) {
+        Log.i(TAG, "fetchEmployeeOvertimes() gestartet für Mitarbeiter: " + employeeKey);
+        rosterApi.getEmployeeOvertimes("Bearer " + token, employeeKey).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                handleListResponse(response, new TypeToken<List<Overtime>>() {
                 }.getType(), callback);
             }
 
@@ -295,6 +328,9 @@ public class RetrofitNetworkHandler {
 
         @GET("employees/{id}/absences")
         Call<JsonElement> getEmployeeAbsences(@Header("Authorization") String auth, @Path("id") int employeeKey);
+
+        @GET("employees/{id}/overtimes")
+        Call<JsonElement> getEmployeeOvertimes(@Header("Authorization") String auth, @Path("id") int employeeKey);
 
         @GET("users/me")
         Call<JsonElement> getCurrentUser(@Header("Authorization") String auth);

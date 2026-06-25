@@ -11,9 +11,10 @@ import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
 import de.mamakow.dienstplanapotheke.model.Converters;
 import de.mamakow.dienstplanapotheke.model.Employee;
+import de.mamakow.dienstplanapotheke.model.Overtime;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 
-@Database(entities = {RosterItem.class, Employee.class, Branch.class, Absence.class}, version = 6, exportSchema = false)
+@Database(entities = {RosterItem.class, Employee.class, Branch.class, Absence.class, Overtime.class}, version = 8, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -44,4 +45,6 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract BranchDao branchDao();
 
     public abstract AbsenceDao absenceDao();
+
+    public abstract OvertimeDao overtimeDao();
 }

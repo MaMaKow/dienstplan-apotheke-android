@@ -13,12 +13,14 @@ import java.util.List;
 import de.mamakow.dienstplanapotheke.database.AppDatabase;
 import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
+import de.mamakow.dienstplanapotheke.model.Overtime;
 import de.mamakow.dienstplanapotheke.model.Roster;
 import de.mamakow.dienstplanapotheke.model.Workforce;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 import de.mamakow.dienstplanapotheke.repository.AbsenceRepository;
 import de.mamakow.dienstplanapotheke.repository.BranchRepository;
 import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
+import de.mamakow.dienstplanapotheke.repository.OvertimeRepository;
 import de.mamakow.dienstplanapotheke.repository.RosterRepository;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 
@@ -27,6 +29,8 @@ public class MainViewModel extends AndroidViewModel {
     private final EmployeeRepository employeeRepository;
     private final BranchRepository branchRepository;
     private final AbsenceRepository absenceRepository;
+    private final OvertimeRepository overtimeRepository;
+
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
@@ -40,6 +44,7 @@ public class MainViewModel extends AndroidViewModel {
         employeeRepository = new EmployeeRepository(db.employeeDao(), networkHandler, sessionManager);
         branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
         absenceRepository = new AbsenceRepository(db.absenceDao(), networkHandler, sessionManager);
+        overtimeRepository = new OvertimeRepository(db.overtimeDao(), networkHandler, sessionManager);
     }
 
     public LiveData<Roster> getRoster() {
@@ -64,6 +69,10 @@ public class MainViewModel extends AndroidViewModel {
         return absenceRepository.getAbsencesByEmployeeIdAndYear(employeeKey, year);
     }
 
+    public LiveData<List<Overtime>> getOvertimesForEmployeeAndYear(int employeeKey, int year) {
+        return overtimeRepository.getOvertimesByEmployeeIdAndYear(employeeKey, year);
+    }
+
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
@@ -74,6 +83,10 @@ public class MainViewModel extends AndroidViewModel {
 
     public void fetchAllAbsences() {
         absenceRepository.fetchAndSaveAbsences();
+    }
+
+    public void fetchOvertimes(int employeeKey) {
+        overtimeRepository.fetchAndSaveEmployeeOvertimes(employeeKey);
     }
 
     public void refreshData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {

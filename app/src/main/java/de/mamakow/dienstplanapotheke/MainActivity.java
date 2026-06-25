@@ -43,6 +43,7 @@ import de.mamakow.dienstplanapotheke.session.SessionManager;
 import de.mamakow.dienstplanapotheke.view.AbsenceAdapter;
 import de.mamakow.dienstplanapotheke.view.BranchRosterAdapter;
 import de.mamakow.dienstplanapotheke.view.HeatmapFragment;
+import de.mamakow.dienstplanapotheke.view.OvertimeAdapter;
 import de.mamakow.dienstplanapotheke.view.RosterAdapter;
 import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private BranchRosterAdapter branchRosterAdapter;
 
     private AbsenceAdapter absenceAdapter;
+    private OvertimeAdapter overtimeAdapter;
 
     private MaterialButtonToggleGroup viewModeToggleGroup;
     private Button buttonDatePicker;
@@ -210,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
         rosterAdapter = new RosterAdapter();
         branchRosterAdapter = new BranchRosterAdapter();
         absenceAdapter = new AbsenceAdapter();
+        overtimeAdapter = new OvertimeAdapter();
         recyclerView.setAdapter(rosterAdapter);
     }
 
@@ -223,6 +226,9 @@ public class MainActivity extends AppCompatActivity {
                 updateEmployeeSpinner(sessionManager);
                 if (currentViewMode == ViewMode.ABSENCE) {
                     observeAbsences();
+                }
+                if (currentViewMode == ViewMode.OVERTIME) {
+                    observeOvertimes();
                 }
             }
         });
@@ -273,6 +279,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void observeOvertimes() {
+        Log.d(TAG, "Inside observeOvertimes()");
+        if (selectedEmployee != null) {
+            Log.d(TAG, "selectedEmployee != null");
+            viewModel.getOvertimesForEmployeeAndYear(selectedEmployee.getEmployeeKey(), selectedDate.getYear())
+                    .observe(this, overtimes -> {
+                        Log.d(TAG, "Überstunden empfangen: " + (overtimes != null ? overtimes.size() : 0));
+                        if (currentViewMode == ViewMode.OVERTIME && overtimes != null) {
+                            Log.d(TAG, "currentViewMode == ViewMode.OVERTIME && overtimes != null");
+                            overtimeAdapter.setOvertimes(overtimes);
+                        }
+                    });
+        }
+        Log.d(TAG, "End of observeOvertimes()");
+    }
+
     private void setupListeners() {
         swipeRefreshLayout.setOnRefreshListener(this::refreshData);
         viewModeToggleGroup.addOnButtonCheckedListener((viewModeToggleGroup, checkedId, isChecked) -> {
@@ -289,6 +311,8 @@ public class MainActivity extends AppCompatActivity {
                 currentViewMode = ViewMode.ABSENCE;
             } else if (checkedId == R.id.btnAbsenceHeatmapView) {
                 currentViewMode = ViewMode.TEAM_HEATMAP;
+            } else if (checkedId == R.id.btnOvertimeView) {
+                currentViewMode = ViewMode.OVERTIME;
             } else if (checkedId == R.id.btnLogout) {
                 SessionManager sessionManager = new SessionManager(this);
                 sessionManager.logout();
@@ -322,6 +346,8 @@ public class MainActivity extends AppCompatActivity {
                 selectedDate = selectedDate.minusDays(1);
             } else if (currentViewMode == ViewMode.ABSENCE || currentViewMode == ViewMode.TEAM_HEATMAP) {
                 selectedDate = selectedDate.minusYears(1);
+            } else if (currentViewMode == ViewMode.OVERTIME) {
+                selectedDate = selectedDate.minusYears(1);
             } else {
                 selectedDate = selectedDate.minusWeeks(1);
             }
@@ -333,6 +359,8 @@ public class MainActivity extends AppCompatActivity {
             if (currentViewMode == ViewMode.BRANCH) {
                 selectedDate = selectedDate.plusDays(1);
             } else if (currentViewMode == ViewMode.ABSENCE || currentViewMode == ViewMode.TEAM_HEATMAP) {
+                selectedDate = selectedDate.plusYears(1);
+            } else if (currentViewMode == ViewMode.OVERTIME) {
                 selectedDate = selectedDate.plusYears(1);
             } else {
                 selectedDate = selectedDate.plusWeeks(1);
@@ -380,6 +408,12 @@ public class MainActivity extends AppCompatActivity {
                     if (currentViewMode == ViewMode.ABSENCE) {
                         observeAbsences();
                     }
+                    if (currentViewMode == ViewMode.OVERTIME) {
+                        Log.d(TAG, "currentViewMode == ViewMode.OVERTIME");
+                        Log.d(TAG, "Starte observeOvertimes()");
+                        observeOvertimes();
+                        Log.d(TAG, "Nach observeOvertimes() ausgeführt");
+                    }
                     refreshData();
                 }
             }
@@ -402,6 +436,9 @@ public class MainActivity extends AppCompatActivity {
             observeAbsences();
         } else if (currentViewMode == ViewMode.BRANCH) {
             recyclerView.setAdapter(branchRosterAdapter);
+        } else if (currentViewMode == ViewMode.OVERTIME) {
+            observeOvertimes();
+            recyclerView.setAdapter(overtimeAdapter);
         } else {
             recyclerView.setAdapter(rosterAdapter);
         }
@@ -493,6 +530,10 @@ public class MainActivity extends AppCompatActivity {
             buttonDatePicker.setText(String.valueOf(selectedDate.getYear()));
             branchSpinner.setVisibility(View.GONE);
             employeeSpinner.setVisibility(View.GONE);
+        } else if (currentViewMode == ViewMode.OVERTIME) {
+            buttonDatePicker.setText(String.valueOf(selectedDate.getYear()));
+            branchSpinner.setVisibility(View.GONE);
+            employeeSpinner.setVisibility(View.VISIBLE);
         } else {
             LocalDate monday = selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             buttonDatePicker.setText(String.format("%s %s", getString(R.string.woche_vom), monday.format(dateFormatter)));
@@ -531,9 +572,12 @@ public class MainActivity extends AppCompatActivity {
         if (currentViewMode == ViewMode.TEAM_HEATMAP) {
             viewModel.fetchAllAbsences();
         }
+        if (currentViewMode == ViewMode.OVERTIME) {
+            viewModel.fetchOvertimes(selectedEmployee.getEmployeeKey());
+        }
     }
 
     private enum ViewMode {
-        BRANCH, EMPLOYEE, ABSENCE, TEAM_HEATMAP
+        BRANCH, EMPLOYEE, ABSENCE, TEAM_HEATMAP, OVERTIME
     }
 }

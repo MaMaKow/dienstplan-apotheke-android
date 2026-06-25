@@ -23,4 +23,9 @@
     <string name="login_button">Einloggen</string>
     <string name="login_failed">Login fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.</string>
     <string name="kommentar">Kommentar</string>
+    <string name="reason">Grund</string>
+    <string name="date">Datum</string>
+    <string name="balance">Saldo</string>
+    <string name="hours">Stunden</string>
+    <string name="hours_of_overtime">Hours of overtime</string>
 </resources>
