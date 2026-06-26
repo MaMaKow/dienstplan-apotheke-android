@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import de.mamakow.dienstplanapotheke.model.Absence;
 import de.mamakow.dienstplanapotheke.model.Branch;
@@ -23,6 +24,7 @@ import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.Overtime;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 import de.mamakow.dienstplanapotheke.model.UserData;
+import de.mamakow.dienstplanapotheke.model.dto.RosterItemDto;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -31,10 +33,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.GET;
-import retrofit2.http.Header;
-import retrofit2.http.Path;
-import retrofit2.http.Query;
 
 public class RetrofitNetworkHandler {
 
@@ -160,6 +158,43 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(Call<JsonElement> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
+    public void updateRoster(int branchId, String dateStart, String dateEnd, Map<String, List<RosterItemDto>> data, NetworkResponseCallback<String> callback) {
+        RosterUpdateRequest request = new RosterUpdateRequest(data);
+        rosterApi.updateRoster(branchId, dateStart, dateEnd, request).enqueue(new Callback<RosterUpdateResponse>() {
+            @Override
+            public void onResponse(Call<RosterUpdateResponse> call, Response<RosterUpdateResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    callback.onSuccess(response.body().message);
+                } else {
+                    callback.onError("Update fehlgeschlagen: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<RosterUpdateResponse> call, Throwable t) {
+                callback.onError(t.getMessage());
+            }
+        });
+    }
+
+    public void deleteRoster(int branchId, String date, NetworkResponseCallback<String> callback) {
+        rosterApi.deleteRoster(branchId, date).enqueue(new Callback<RosterUpdateResponse>() {
+            @Override
+            public void onResponse(Call<RosterUpdateResponse> call, Response<RosterUpdateResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    callback.onSuccess(response.body().message);
+                } else {
+                    callback.onError("Löschen fehlgeschlagen: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<RosterUpdateResponse> call, Throwable t) {
                 callback.onError(t.getMessage());
             }
         });
@@ -307,34 +342,6 @@ public class RetrofitNetworkHandler {
         });
     }
 
-    private interface RosterApi {
-        @GET("rosters")
-        Call<JsonElement> getRoster(@Header("Authorization") String auth, @Query("dateStart") String s, @Query("dateEnd") String e, @Query("employeeKey") Integer ek, @Query("branchId") Integer bi);
-
-        @GET("employees")
-        Call<JsonElement> getEmployees(@Header("Authorization") String auth);
-
-        @GET("branches")
-        Call<JsonElement> getBranches(@Header("Authorization") String auth);
-
-        @GET("branches/{id}")
-        Call<JsonElement> getBranchById(@Header("Authorization") String authorization, @Path("id") int branchId);
-
-        @GET("absences")
-        Call<JsonElement> getAllAbsences(@Header("Authorization") String auth);
-
-        @GET("absences/{year}")
-        Call<JsonElement> getAbsencesByYear(@Header("Authorization") String auth, @Path("year") int year);
-
-        @GET("employees/{id}/absences")
-        Call<JsonElement> getEmployeeAbsences(@Header("Authorization") String auth, @Path("id") int employeeKey);
-
-        @GET("employees/{id}/overtimes")
-        Call<JsonElement> getEmployeeOvertimes(@Header("Authorization") String auth, @Path("id") int employeeKey);
-
-        @GET("users/me")
-        Call<JsonElement> getCurrentUser(@Header("Authorization") String auth);
-    }
 
     public interface NetworkResponseCallback<T> {
         void onSuccess(T data);
@@ -346,4 +353,18 @@ public class RetrofitNetworkHandler {
         String date;
         List<RosterItem> roster;
     }
+
+    public static class RosterUpdateResponse {
+        public String message;
+    }
+
+    public static class RosterUpdateRequest {
+        public Map<String, List<RosterItemDto>> data;
+
+        public RosterUpdateRequest(Map<String, List<RosterItemDto>> data) {
+            this.data = data;
+        }
+    }
+
+
 }
