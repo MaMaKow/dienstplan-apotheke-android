@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_base_plan_employee"
+            android:icon="@drawable/outline_assignment_ind_24"
+            android:title="@string/grundplan_mitarbeiter" />
+        <item
+            android:id="@+id/nav_base_plan_branch"
+            android:icon="@drawable/outline_assignment_24"
+            android:title="@string/grundplan_filialen" />
+        <item
+            android:id="@+id/nav_emergency_service"
+            android:icon="@drawable/outline_emergency_24"
+            android:title="@string/notdienste" />
+        <item
+            android:id="@+id/nav_admin_branches"
+            android:icon="@drawable/outline_supervisor_account_24"
+            android:title="@string/filialen_administration" />
+    </group>
+
+    <item android:title="System">
+        <menu>
+            <item
+                android:id="@+id/nav_settings"
+                android:icon="@drawable/outline_settings_24"
+                android:title="@string/einstellungen" />
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/outline_logout_24"
+                android:title="@string/abmelden" />
+        </menu>
+    </item>
+</menu>

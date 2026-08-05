@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_roster_employee"
+        android:icon="@drawable/employee_2"
+        android:title="@string/mein_plan" />
+
+    <item
+        android:id="@+id/nav_roster_branch"
+        android:icon="@drawable/outline_store_24"
+        android:title="@string/filiale" />
+
+    <item
+        android:id="@+id/nav_absences"
+        android:icon="@drawable/outline_event_busy_24"
+        android:title="@string/abwesenheiten" />
+
+    <item
+        android:id="@+id/nav_overtime"
+        android:icon="@drawable/outline_more_time_24"
+        android:title="@string/überstunden" />
+
+
+</menu>

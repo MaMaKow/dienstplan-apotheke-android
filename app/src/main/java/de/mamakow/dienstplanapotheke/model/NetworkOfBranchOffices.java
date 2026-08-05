@@ -62,4 +62,9 @@ public class NetworkOfBranchOffices {
 
         return branchObject;
     }
+
+    public Branch getDefaultBranch() {
+        return getListOfBranches().get(0);
+    }
 }
+

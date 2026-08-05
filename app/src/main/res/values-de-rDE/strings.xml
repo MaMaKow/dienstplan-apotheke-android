@@ -25,4 +25,16 @@
     <string name="balance">Saldo</string>
     <string name="hours">Stunden</string>
     <string name="hours_of_overtime">Überstunden</string>
+    <string name="mein_plan">Mein Plan</string>
+    <string name="abwesenheiten">Abwesenheiten</string>
+    <string name="filiale">Filiale</string>
+    <string name="überstunden">überstunden</string>
+    <string name="grundplan_mitarbeiter">Grundplan Mitarbeiter</string>
+    <string name="grundplan_filialen">Grundplan Filialen</string>
+    <string name="filialen_administration">Filialen-Administration</string>
+    <string name="einstellungen">Einstellungen</string>
+    <string name="abmelden">Abmelden</string>
+    <string name="dienstplan_apotheke">Dienstplan Apotheke</string>
+    <string name="navigation_drawer_open">Navigationsmenü öffnen</string>
+    <string name="navigation_drawer_close">Navigationsmenü schließen</string>
 </resources>
