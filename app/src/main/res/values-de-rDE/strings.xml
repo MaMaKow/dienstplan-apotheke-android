@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Dienstplan Apotheke</string>
     <string name="unknown_branch">Unbekannte Filiale</string>
-    <string name="woche_vom">Woche vom</string>
+    <string name="woche_vom">Woche vom %1$s</string>
     <string name="mitarbeiter_ansicht">Mitarbeiter-Ansicht</string>
     <string name="filial_ansicht">Filial-Ansicht</string>
     <string name="vorheriges_datum">Vorheriges Datum</string>
@@ -26,6 +26,7 @@
     <string name="hours">Stunden</string>
     <string name="hours_of_overtime">Überstunden</string>
     <string name="mein_plan">Mein Plan</string>
+    <string name="notdienste">Notdienste</string>
     <string name="abwesenheiten">Abwesenheiten</string>
     <string name="filiale">Filiale</string>
     <string name="überstunden">überstunden</string>

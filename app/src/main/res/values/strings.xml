@@ -5,7 +5,7 @@
     <string name="api_base_url" translatable="false">
         https://martin-mandelkow.de/development/testing/dienstplan-test/src/php/restful-api/
     </string>
-    <string name="woche_vom">"Woche vom "</string>
+    <string name="woche_vom">"Woche vom %1$s"</string>
     <string name="mitarbeiter_ansicht">Mitarbeiter</string>
     <string name="filial_ansicht">Filialen</string>
     <string name="vorheriges_datum">Vorheriges Datum</string>

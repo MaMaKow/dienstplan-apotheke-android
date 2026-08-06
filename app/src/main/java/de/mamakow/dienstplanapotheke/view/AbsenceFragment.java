@@ -1,9 +1,15 @@
 package de.mamakow.dienstplanapotheke.view;
 
+import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,9 +20,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import de.mamakow.dienstplanapotheke.R;
-import de.mamakow.dienstplanapotheke.session.SessionManager;
+import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 public class AbsenceFragment extends Fragment {
@@ -24,22 +32,31 @@ public class AbsenceFragment extends Fragment {
     private MainViewModel viewModel;
     private AbsenceAdapter absenceAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView recyclerView;
     private View progressBar;
+    private Spinner employeeSpinner;
+    private Button buttonDatePicker;
+    private ImageButton buttonPrevDate;
+    private ImageButton buttonNextDate;
+
+    private List<Employee> availableEmployees = new ArrayList<>();
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_list, container, false);
+        return inflater.inflate(R.layout.fragment_employee_date_nav, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        recyclerView = view.findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         progressBar = view.findViewById(R.id.progressBar);
+        employeeSpinner = view.findViewById(R.id.employeeSpinner);
+        buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
+        buttonPrevDate = view.findViewById(R.id.buttonPrevDate);
+        buttonNextDate = view.findViewById(R.id.buttonNextDate);
 
         absenceAdapter = new AbsenceAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -47,26 +64,84 @@ public class AbsenceFragment extends Fragment {
 
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
+        setupDateNavigation();
+        setupEmployeeSpinner();
         setupObservers();
 
         swipeRefreshLayout.setOnRefreshListener(this::refreshData);
-        
-        // Initial data load if needed
-        refreshData();
+    }
+
+    private void setupDateNavigation() {
+        buttonPrevDate.setOnClickListener(v -> {
+            LocalDate current = viewModel.getSelectedDate().getValue();
+            if (current != null) {
+                viewModel.setSelectedDate(current.minusYears(1));
+            }
+        });
+
+        buttonNextDate.setOnClickListener(v -> {
+            LocalDate current = viewModel.getSelectedDate().getValue();
+            if (current != null) {
+                viewModel.setSelectedDate(current.plusYears(1));
+            }
+        });
+
+        buttonDatePicker.setOnClickListener(v -> {
+            LocalDate current = viewModel.getSelectedDate().getValue();
+            if (current == null) current = LocalDate.now();
+            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+                LocalDate picked = LocalDate.of(year, month + 1, dayOfMonth);
+                viewModel.setSelectedDate(picked);
+            }, current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
+        });
+    }
+
+    private void setupEmployeeSpinner() {
+        employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position >= 0 && position < availableEmployees.size()) {
+                    Employee selectedEmployee = availableEmployees.get(position);
+                    Employee currentEmployee = viewModel.getSelectedEmployee().getValue();
+                    if (currentEmployee == null || currentEmployee.getEmployeeKey() != selectedEmployee.getEmployeeKey()) {
+                        viewModel.setSelectedEmployee(selectedEmployee);
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void setupObservers() {
-        SessionManager sessionManager = new SessionManager(requireContext());
-        int employeeKey = sessionManager.getUserEmployeeKey();
-        int year = LocalDate.now().getYear();
+        viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
+            if (date != null) {
+                buttonDatePicker.setText(String.valueOf(date.getYear()));
+                observeAbsences();
+                refreshData();
+            }
+        });
 
-        if (employeeKey != -1) {
-            viewModel.getAbsencesForEmployeeAndYear(employeeKey, year).observe(getViewLifecycleOwner(), absences -> {
-                if (absences != null) {
-                    absenceAdapter.setAbsences(absences);
+        viewModel.getSelectedEmployee().observe(getViewLifecycleOwner(), employee -> {
+            if (employee != null) {
+                updateSpinnerSelection(employee);
+                observeAbsences();
+                refreshData();
+            }
+        });
+
+        viewModel.getWorkforce().observe(getViewLifecycleOwner(), workforce -> {
+            if (workforce != null) {
+                availableEmployees = workforce.getEmployees();
+                updateSpinnerAdapter(workforce.getEmployeeNames());
+                Employee current = viewModel.getSelectedEmployee().getValue();
+                if (current != null) {
+                    updateSpinnerSelection(current);
                 }
-            });
-        }
+            }
+        });
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (!swipeRefreshLayout.isRefreshing()) {
@@ -78,11 +153,41 @@ public class AbsenceFragment extends Fragment {
         });
     }
 
+    private void observeAbsences() {
+        Employee employee = viewModel.getSelectedEmployee().getValue();
+        LocalDate date = viewModel.getSelectedDate().getValue();
+        if (employee != null && date != null) {
+            viewModel.getAbsencesForEmployeeAndYear(employee.getEmployeeKey(), date.getYear()).removeObservers(getViewLifecycleOwner());
+            viewModel.getAbsencesForEmployeeAndYear(employee.getEmployeeKey(), date.getYear()).observe(getViewLifecycleOwner(), absences -> {
+                if (absences != null) {
+                    absenceAdapter.setAbsences(absences);
+                }
+            });
+        }
+    }
+
+    private void updateSpinnerAdapter(List<String> names) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_item, names);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        employeeSpinner.setOnItemSelectedListener(null);
+        employeeSpinner.setAdapter(adapter);
+        setupEmployeeSpinner();
+    }
+
+    private void updateSpinnerSelection(Employee employee) {
+        for (int i = 0; i < availableEmployees.size(); i++) {
+            if (availableEmployees.get(i).getEmployeeKey() == employee.getEmployeeKey()) {
+                employeeSpinner.setSelection(i);
+                break;
+            }
+        }
+    }
+
     private void refreshData() {
-        SessionManager sessionManager = new SessionManager(requireContext());
-        int employeeKey = sessionManager.getUserEmployeeKey();
-        if (employeeKey != -1) {
-            viewModel.refreshData(LocalDate.now(), LocalDate.now(), employeeKey, null);
+        Employee employee = viewModel.getSelectedEmployee().getValue();
+        if (employee != null) {
+            viewModel.refreshData(LocalDate.now(), LocalDate.now(), employee.getEmployeeKey(), null);
             viewModel.fetchAllAbsences();
         } else {
             swipeRefreshLayout.setRefreshing(false);

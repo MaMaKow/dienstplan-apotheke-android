@@ -1,11 +1,14 @@
 package de.mamakow.dienstplanapotheke.view;
 
+import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
@@ -17,8 +20,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import de.mamakow.dienstplanapotheke.R;
@@ -27,12 +32,15 @@ import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 public class RosterBranchFragment extends Fragment {
 
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE dd.MM.yyyy", Locale.GERMAN);
     private MainViewModel viewModel;
     private BranchRosterAdapter branchRosterAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView recyclerView;
     private View progressBar;
     private Spinner branchSpinner;
+    private Button buttonDatePicker;
+    private ImageButton buttonPrevDate;
+    private ImageButton buttonNextDate;
     private List<Branch> availableBranches = new ArrayList<>();
 
     @Nullable
@@ -45,20 +53,50 @@ public class RosterBranchFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        recyclerView = view.findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         progressBar = view.findViewById(R.id.progressBar);
         branchSpinner = view.findViewById(R.id.branchSpinner);
+        buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
+        buttonPrevDate = view.findViewById(R.id.buttonPrevDate);
+        buttonNextDate = view.findViewById(R.id.buttonNextDate);
 
         branchRosterAdapter = new BranchRosterAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(branchRosterAdapter);
 
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+
+        setupDateNavigation();
         setupBranchSpinner();
         setupObservers();
 
         swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+    }
+
+    private void setupDateNavigation() {
+        buttonPrevDate.setOnClickListener(v -> {
+            LocalDate current = viewModel.getSelectedDate().getValue();
+            if (current != null) {
+                viewModel.setSelectedDate(current.minusDays(1));
+            }
+        });
+
+        buttonNextDate.setOnClickListener(v -> {
+            LocalDate current = viewModel.getSelectedDate().getValue();
+            if (current != null) {
+                viewModel.setSelectedDate(current.plusDays(1));
+            }
+        });
+
+        buttonDatePicker.setOnClickListener(v -> {
+            LocalDate current = viewModel.getSelectedDate().getValue();
+            if (current == null) current = LocalDate.now();
+            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+                LocalDate picked = LocalDate.of(year, month + 1, dayOfMonth);
+                viewModel.setSelectedDate(picked);
+            }, current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
+        });
     }
 
     private void setupBranchSpinner() {
@@ -67,12 +105,10 @@ public class RosterBranchFragment extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position >= 0 && position < availableBranches.size()) {
                     Branch selectedBranch = availableBranches.get(position);
-                    Branch currentSelected = viewModel.getSelectedBranch().getValue();
+                    Branch currentBranch = viewModel.getSelectedBranch().getValue();
 
-                    // Only trigger refresh if the branch has actually changed.
-                    // This prevents an infinite loop caused by programmatic selection changes
-                    // (like setAdapter or setSelection) during spinner updates.
-                    if (currentSelected == null || currentSelected.getBranchId() != selectedBranch.getBranchId()) {
+                    // Guard to prevent infinite loop and redundant refreshes
+                    if (currentBranch == null || currentBranch.getBranchId() != selectedBranch.getBranchId()) {
                         viewModel.setSelectedBranch(selectedBranch);
                         refreshData();
                     }
@@ -86,10 +122,28 @@ public class RosterBranchFragment extends Fragment {
     }
 
     private void setupObservers() {
+        viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
+            if (date != null) {
+                buttonDatePicker.setText(date.format(dateFormatter));
+                refreshData();
+            }
+        });
+
+        viewModel.getSelectedBranch().observe(getViewLifecycleOwner(), branch -> {
+            if (branch != null) {
+                updateSpinnerSelection(branch);
+                refreshData();
+            }
+        });
+
         viewModel.getBranches().observe(getViewLifecycleOwner(), branches -> {
             if (branches != null) {
                 availableBranches = branches;
-                updateSpinner(branches);
+                updateSpinnerAdapter(branches.stream().map(Branch::getBranchName).collect(Collectors.toList()));
+                Branch current = viewModel.getSelectedBranch().getValue();
+                if (current != null) {
+                    updateSpinnerSelection(current);
+                }
             }
         });
 
@@ -115,36 +169,32 @@ public class RosterBranchFragment extends Fragment {
         });
     }
 
-    private void updateSpinner(List<Branch> branches) {
-        List<String> names = branches.stream().map(Branch::getBranchName).collect(Collectors.toList());
-
+    private void updateSpinnerAdapter(List<String> names) {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_item, names);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        // Option B: Suppress the listener during the update to prevent redundant calls
         branchSpinner.setOnItemSelectedListener(null);
         branchSpinner.setAdapter(adapter);
-
-        // Restore selection if a branch was already selected in ViewModel
-        Branch current = viewModel.getSelectedBranch().getValue();
-        if (current != null) {
-            for (int i = 0; i < branches.size(); i++) {
-                if (branches.get(i).getBranchId() == current.getBranchId()) {
-                    branchSpinner.setSelection(i);
-                    break;
-                }
-            }
-        }
-
-        // Re-attach the listener
         setupBranchSpinner();
     }
 
+    private void updateSpinnerSelection(Branch branch) {
+        for (int i = 0; i < availableBranches.size(); i++) {
+            if (availableBranches.get(i).getBranchId() == branch.getBranchId()) {
+                branchSpinner.setSelection(i);
+                break;
+            }
+        }
+    }
+
     private void refreshData() {
-        LocalDate now = LocalDate.now();
-        Branch selectedBranch = viewModel.getSelectedBranch().getValue();
-        Integer branchId = selectedBranch != null ? selectedBranch.getBranchId() : null;
-        viewModel.refreshData(now, now, null, branchId);
+        LocalDate date = viewModel.getSelectedDate().getValue();
+        Branch branch = viewModel.getSelectedBranch().getValue();
+        if (date != null && branch != null) {
+            viewModel.refreshData(date, date, null, branch.getBranchId());
+        } else {
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 }
