@@ -38,4 +38,5 @@
     <string name="dienstplan_apotheke">Dienstplan Apotheke</string>
     <string name="navigation_drawer_open">Navigationsmenü öffnen</string>
     <string name="navigation_drawer_close">Navigationsmenü schließen</string>
+    <string name="filiale_format">Filiale: %s</string>
 </resources>

@@ -9,61 +9,66 @@
     app:strokeColor="#DDDDDD"
     app:strokeWidth="1dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#F0F0F0"
-        android:orientation="vertical"
         android:padding="12dp">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <!-- Schichtzeit (immer oben rechts) -->
+        <TextView
+            android:id="@+id/textViewShiftTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="?attr/colorPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/textViewShiftTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:text=""
-                android:textColor="?attr/colorPrimary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+        <!-- Filiale (links neben Schichtzeit oder oben links) -->
+        <TextView
+            android:id="@+id/textViewBranch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text=""
+            android:textSize="13sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/textViewShiftTime"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/textViewBranch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="2dp"
-                android:layout_toStartOf="@id/textViewShiftTime"
-                android:text=""
-                android:textSize="13sp" />
-
-        </RelativeLayout>
-
-
+        <!-- Pause (rückt nach oben an den parent, wenn Branch GONE ist) -->
         <TextView
             android:id="@+id/textViewPause"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text=""
             android:textColor="#666666"
             android:textSize="12sp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/textViewShiftTime"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textViewBranch"
+            app:layout_goneMarginTop="0dp" />
 
+        <!-- Kommentar -->
         <TextView
             android:id="@+id/textViewComment"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:padding="4dp"
-            android:text="@string/kommentar"
+            android:text=""
             android:textSize="12sp"
             android:textStyle="italic"
-            android:visibility="gone" />
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textViewPause" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

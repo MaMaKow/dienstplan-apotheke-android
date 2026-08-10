@@ -138,6 +138,7 @@ public class RosterEmployeeFragment extends Fragment {
         viewModel.getWorkforce().observe(getViewLifecycleOwner(), workforce -> {
             if (workforce != null) {
                 availableEmployees = workforce.getEmployees();
+                rosterAdapter.setEmployees(availableEmployees);
                 updateSpinnerAdapter(workforce.getEmployeeNames());
                 Employee current = viewModel.getSelectedEmployee().getValue();
                 if (current != null) {
