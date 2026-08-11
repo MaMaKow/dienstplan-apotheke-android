@@ -5,7 +5,9 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -36,11 +38,14 @@ public class MainViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
-    
+
     // Shared state for Fragments
     private final MutableLiveData<LocalDate> selectedDate = new MutableLiveData<>(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)));
     private final MutableLiveData<Branch> selectedBranch = new MutableLiveData<>();
     private final MutableLiveData<Employee> selectedEmployee = new MutableLiveData<>();
+
+    // Reactive data stream for Absences
+    private final LiveData<List<Absence>> absences;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -53,7 +58,7 @@ public class MainViewModel extends AndroidViewModel {
         branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
         absenceRepository = new AbsenceRepository(db.absenceDao(), networkHandler, sessionManager);
         overtimeRepository = new OvertimeRepository(db.overtimeDao(), networkHandler, sessionManager);
-        
+
         // Initialize selectedEmployee from SessionManager
         int employeeKey = sessionManager.getUserEmployeeKey();
         if (employeeKey != -1) {
@@ -62,6 +67,25 @@ public class MainViewModel extends AndroidViewModel {
             e.setEmployeeFirstName(sessionManager.getUserDisplayName());
             selectedEmployee.setValue(e);
         }
+
+        // Setup reactive stream for absences
+        MediatorLiveData<Pair<Integer, Integer>> absenceFilter = new MediatorLiveData<>();
+        absenceFilter.addSource(selectedEmployee, employee -> {
+            Integer year = selectedDate.getValue() != null ? selectedDate.getValue().getYear() : LocalDate.now().getYear();
+            if (employee != null) {
+                absenceFilter.setValue(new Pair<>(employee.getEmployeeKey(), year));
+            }
+        });
+        absenceFilter.addSource(selectedDate, date -> {
+            Employee employee = selectedEmployee.getValue();
+            if (employee != null && date != null) {
+                absenceFilter.setValue(new Pair<>(employee.getEmployeeKey(), date.getYear()));
+            }
+        });
+
+        absences = Transformations.switchMap(absenceFilter, filter ->
+                absenceRepository.getAbsencesByEmployeeIdAndYear(filter.first, filter.second)
+        );
     }
 
     public LiveData<Roster> getRoster() {
@@ -100,8 +124,8 @@ public class MainViewModel extends AndroidViewModel {
         return branchRepository.getAllBranches();
     }
 
-    public LiveData<List<Absence>> getAbsencesForEmployeeAndYear(int employeeKey, int year) {
-        return absenceRepository.getAbsencesByEmployeeIdAndYear(employeeKey, year);
+    public LiveData<List<Absence>> getAbsences() {
+        return absences;
     }
 
     public LiveData<List<Overtime>> getOvertimesForEmployeeAndYear(int employeeKey, int year) {
@@ -112,13 +136,6 @@ public class MainViewModel extends AndroidViewModel {
         return isLoading;
     }
 
-    public LiveData<String> getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void fetchAllAbsences() {
-        absenceRepository.fetchAndSaveAbsences();
-    }
 
     public void fetchOvertimes(int employeeKey) {
         overtimeRepository.fetchAndSaveEmployeeOvertimes(employeeKey);
@@ -134,7 +151,7 @@ public class MainViewModel extends AndroidViewModel {
         if (employeeKey == null && branchId == null) {
             isLoading.postValue(false);
         } else {
-            rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+            rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<>() {
                 @Override
                 public void onSuccess(Void data) {
                     isLoading.postValue(false);
@@ -149,7 +166,20 @@ public class MainViewModel extends AndroidViewModel {
         }
 
         if (employeeKey != null) {
-            absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey);
+            // Updated to use the year from the provided date range (usually the current view year)
+            int year = startDate.getYear();
+            absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey, year);
+        }
+    }
+
+    // Helper class for combining filters
+    private static class Pair<A, B> {
+        public final A first;
+        public final B second;
+
+        public Pair(A first, B second) {
+            this.first = first;
+            this.second = second;
         }
     }
 }

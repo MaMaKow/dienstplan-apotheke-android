@@ -295,9 +295,9 @@ public class RetrofitNetworkHandler {
         });
     }
 
-    public void fetchEmployeeAbsences(String token, int employeeKey, NetworkResponseCallback<List<Absence>> callback) {
-        Log.i(TAG, "fetchEmployeeAbsences() gestartet für Mitarbeiter: " + employeeKey);
-        rosterApi.getEmployeeAbsences("Bearer " + token, employeeKey).enqueue(new Callback<JsonElement>() {
+    public void fetchEmployeeAbsences(String token, int employeeKey, Integer year, NetworkResponseCallback<List<Absence>> callback) {
+        Log.i(TAG, "fetchEmployeeAbsences() gestartet für Mitarbeiter: " + employeeKey + " Jahr: " + year);
+        rosterApi.getEmployeeAbsences("Bearer " + token, employeeKey, year).enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Absence>>() {

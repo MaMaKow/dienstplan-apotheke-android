@@ -45,8 +45,8 @@ public interface RosterApi {
     @GET("absences/{year}")
     Call<JsonElement> getAbsencesByYear(@Header("Authorization") String auth, @Path("year") int year);
 
-    @GET("employees/{id}/absences")
-    Call<JsonElement> getEmployeeAbsences(@Header("Authorization") String auth, @Path("id") int employeeKey);
+    @GET("employees/{id}/absences/{year}")
+    Call<JsonElement> getEmployeeAbsences(@Header("Authorization") String auth, @Path("id") int employeeKey, @Path("year") Integer year);
 
     @GET("employees/{id}/overtimes")
     Call<JsonElement> getEmployeeOvertimes(@Header("Authorization") String auth, @Path("id") int employeeKey);

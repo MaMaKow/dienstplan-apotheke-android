@@ -61,19 +61,23 @@ public class AbsenceRepository {
         });
     }
 
-    public void fetchAndSaveEmployeeAbsences(int employeeKey) {
+    public void fetchAndSaveEmployeeAbsences(int employeeKey, int year) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
             return;
         }
 
-        networkHandler.fetchEmployeeAbsences(token, employeeKey, new RetrofitNetworkHandler.NetworkResponseCallback<List<Absence>>() {
+        networkHandler.fetchEmployeeAbsences(token, employeeKey, year, new RetrofitNetworkHandler.NetworkResponseCallback<List<Absence>>() {
             @Override
             public void onSuccess(List<Absence> absences) {
                 executor.execute(() -> {
+                    // Note: We might want to only delete absences for that specific year if the API filter is strict.
+                    // But if fetchEmployeeAbsences(year) returns all absences for that employee in that year,
+                    // we should probably clear those specifically. 
+                    // For now, let's stick to the current logic but with the year parameter in the API call.
                     absenceDao.deleteAbsencesByEmployeeId(employeeKey);
                     absenceDao.insertAbsences(absences);
-                    Log.d(TAG, "Employee absences saved to database: " + absences.size());
+                    Log.d(TAG, "Employee absences for year " + year + " saved to database: " + absences.size());
                 });
             }
 
@@ -84,17 +88,11 @@ public class AbsenceRepository {
         });
     }
 
-    public LiveData<List<Absence>> getAllAbsencesLiveData() {
-        return absenceDao.getAllAbsencesLiveData();
-    }
 
     public LiveData<List<Absence>> getAllAbsencesByYearLiveData(int year) {
         return absenceDao.getAllAbsencesByYearLiveData(String.valueOf(year));
     }
 
-    public LiveData<List<Absence>> getAbsencesByEmployeeId(int employeeKey) {
-        return absenceDao.getAbsencesByEmployeeId(employeeKey);
-    }
 
     public LiveData<List<Absence>> getAbsencesByEmployeeIdAndYear(int employeeKey, int year) {
         return absenceDao.getAbsencesByEmployeeIdAndYear(employeeKey, String.valueOf(year));

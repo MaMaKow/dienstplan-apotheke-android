@@ -2,6 +2,7 @@ package de.mamakow.dienstplanapotheke.view;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -116,10 +117,16 @@ public class AbsenceFragment extends Fragment {
     }
 
     private void setupObservers() {
+        // Permanent observer for absences - only one instance, clean reactive stream
+        viewModel.getAbsences().observe(getViewLifecycleOwner(), absences -> {
+            if (absences != null) {
+                absenceAdapter.setAbsences(absences);
+            }
+        });
+
         viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
             if (date != null) {
                 buttonDatePicker.setText(String.valueOf(date.getYear()));
-                observeAbsences();
                 refreshData();
             }
         });
@@ -127,7 +134,6 @@ public class AbsenceFragment extends Fragment {
         viewModel.getSelectedEmployee().observe(getViewLifecycleOwner(), employee -> {
             if (employee != null) {
                 updateSpinnerSelection(employee);
-                observeAbsences();
                 refreshData();
             }
         });
@@ -153,19 +159,6 @@ public class AbsenceFragment extends Fragment {
         });
     }
 
-    private void observeAbsences() {
-        Employee employee = viewModel.getSelectedEmployee().getValue();
-        LocalDate date = viewModel.getSelectedDate().getValue();
-        if (employee != null && date != null) {
-            viewModel.getAbsencesForEmployeeAndYear(employee.getEmployeeKey(), date.getYear()).removeObservers(getViewLifecycleOwner());
-            viewModel.getAbsencesForEmployeeAndYear(employee.getEmployeeKey(), date.getYear()).observe(getViewLifecycleOwner(), absences -> {
-                if (absences != null) {
-                    absenceAdapter.setAbsences(absences);
-                }
-            });
-        }
-    }
-
     private void updateSpinnerAdapter(List<String> names) {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_item, names);
@@ -186,9 +179,14 @@ public class AbsenceFragment extends Fragment {
 
     private void refreshData() {
         Employee employee = viewModel.getSelectedEmployee().getValue();
-        if (employee != null) {
-            viewModel.refreshData(LocalDate.now(), LocalDate.now(), employee.getEmployeeKey(), null);
-            viewModel.fetchAllAbsences();
+        LocalDate selectedDate = viewModel.getSelectedDate().getValue();
+        if (employee != null && selectedDate != null) {
+            LocalDate startOfYear = selectedDate.withDayOfYear(1);
+            LocalDate endOfYear = selectedDate.withDayOfYear(selectedDate.lengthOfYear());
+            Log.d("AbsenceFragment", "refreshData for year: " + selectedDate.getYear());
+
+            // Trigger background sync
+            viewModel.refreshData(startOfYear, endOfYear, employee.getEmployeeKey(), null);
         } else {
             swipeRefreshLayout.setRefreshing(false);
         }
