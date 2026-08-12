@@ -2,8 +2,8 @@
 
 ## 1. Visuelles Feedback (Ladezustand)
 
-- [ ] **ProgressBar hinzufügen**: Ein kreisender Ladebalken während `refreshData` aktiv ist.
-- [ ] **Swipe-to-Refresh**: Implementierung von `SwipeRefreshLayout` für manuelles Aktualisieren der
+- [x] **ProgressBar hinzufügen**: Ein kreisender Ladebalken während `refreshData` aktiv ist.
+- [x] **Swipe-to-Refresh**: Implementierung von `SwipeRefreshLayout` für manuelles Aktualisieren der
   Liste.
 
 ## 2. Leere Zustände (Empty States)

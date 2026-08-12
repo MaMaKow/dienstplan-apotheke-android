@@ -91,4 +91,6 @@
 
     <!-- Fallback-Text für unbekannte IDs. Beispiel: "Unbekannt (ID: 5)" -->
     <string name="unknown_with_id">Unbekannt (%1$d)</string>
+    <string name="keine_dienste_gefunden">Keine Dienste gefunden</string>
+    <string name="mitarbeiter_auswaehlen">Mitarbeiter auswählen</string>
 </resources>

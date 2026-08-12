@@ -5,11 +5,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +16,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -38,10 +38,11 @@ public class RosterEmployeeFragment extends Fragment {
     private RosterAdapter rosterAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
     private View progressBar;
-    private Spinner employeeSpinner;
+    private AutoCompleteTextView employeeSpinner;
     private Button buttonDatePicker;
-    private ImageButton buttonPrevDate;
-    private ImageButton buttonNextDate;
+    private MaterialButton buttonPrevDate;
+    private MaterialButton buttonNextDate;
+    private View emptyStateView;
     private List<Employee> availableEmployees = new ArrayList<>();
 
     @Nullable
@@ -61,7 +62,7 @@ public class RosterEmployeeFragment extends Fragment {
         buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
         buttonPrevDate = view.findViewById(R.id.buttonPrevDate);
         buttonNextDate = view.findViewById(R.id.buttonNextDate);
-
+        emptyStateView = view.findViewById(R.id.emptyStateView);
         rosterAdapter = new RosterAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(rosterAdapter);
@@ -102,20 +103,13 @@ public class RosterEmployeeFragment extends Fragment {
     }
 
     private void setupEmployeeSpinner() {
-        employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position >= 0 && position < availableEmployees.size()) {
-                    Employee selected = availableEmployees.get(position);
-                    Employee current = viewModel.getSelectedEmployee().getValue();
-                    if (current == null || current.getEmployeeKey() != selected.getEmployeeKey()) {
-                        viewModel.setSelectedEmployee(selected);
-                    }
+        employeeSpinner.setOnItemClickListener((parent, v, position, id) -> {
+            if (position >= 0 && position < availableEmployees.size()) {
+                Employee selected = availableEmployees.get(position);
+                Employee current = viewModel.getSelectedEmployee().getValue();
+                if (current == null || current.getEmployeeKey() != selected.getEmployeeKey()) {
+                    viewModel.setSelectedEmployee(selected);
                 }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
     }
@@ -150,6 +144,11 @@ public class RosterEmployeeFragment extends Fragment {
         viewModel.getRoster().observe(getViewLifecycleOwner(), roster -> {
             if (roster != null) {
                 rosterAdapter.setRosterDays(roster.getRosterDays());
+                if (roster.getRosterDays().isEmpty()) {
+                    emptyStateView.setVisibility(View.VISIBLE);
+                } else {
+                    emptyStateView.setVisibility(View.GONE);
+                }
             }
         });
 
@@ -170,16 +169,19 @@ public class RosterEmployeeFragment extends Fragment {
     }
 
     private void updateSpinnerAdapter(List<String> names) {
+        // Nutze R.layout.simple_list_item_1 oder ein Material Layout für bessere Abstände
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_item, names);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                android.R.layout.simple_list_item_1, names);
         employeeSpinner.setAdapter(adapter);
     }
+
 
     private void updateSpinnerSelection(Employee employee) {
         for (int i = 0; i < availableEmployees.size(); i++) {
             if (availableEmployees.get(i).getEmployeeKey() == employee.getEmployeeKey()) {
-                employeeSpinner.setSelection(i);
+                // Setze den Text. Der zweite Parameter 'false' ist wichtig,
+                // damit das Dropdown-Menü dabei nicht aufklappt (Filterung deaktivieren).
+                employeeSpinner.setText(availableEmployees.get(i).getEmployeeFullName(), false);
                 break;
             }
         }

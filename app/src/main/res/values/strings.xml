@@ -73,4 +73,9 @@
 
     <!-- Fallback when an ID cannot be resolved. Example: "Unknown (5)" -->
     <string name="unknown_with_id">Unknown (%1$d)</string>
+    <string name="keine_dienste_gefunden">Keine Dienste gefunden</string>
+    <string name="mitarbeiter_auswaehlen">Mitarbeiter auswählen</string>
+    <string name="empty_state_description">Wähle einen anderen Zeitraum oder eine andere Person
+        aus.
+    </string>
 </resources>
