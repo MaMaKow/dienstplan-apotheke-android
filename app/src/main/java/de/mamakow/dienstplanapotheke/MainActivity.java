@@ -12,7 +12,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
@@ -23,7 +22,6 @@ import de.mamakow.dienstplanapotheke.view.AbsenceFragment;
 import de.mamakow.dienstplanapotheke.view.OvertimeFragment;
 import de.mamakow.dienstplanapotheke.view.RosterBranchFragment;
 import de.mamakow.dienstplanapotheke.view.RosterEmployeeFragment;
-import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 /**
  * MainActivity handles Session Management and Fragment Navigation.
@@ -32,7 +30,6 @@ import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private MainViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +72,15 @@ public class MainActivity extends AppCompatActivity {
         EditText editTextUsername = dialogView.findViewById(R.id.editTextUsername);
         EditText editTextPassword = dialogView.findViewById(R.id.editTextPassword);
 
+        // Benutzername im Voraus ausfüllen, wenn bekannt
+        String savedUsername = sessionManager.getStoredUsername();
+        if (!savedUsername.isEmpty()) {
+            editTextUsername.setText(savedUsername);
+            // Optional: Fokus direkt auf das Passwort-Feld setzen,
+            // da der Name ja schon da ist
+            editTextPassword.requestFocus();
+        }
+
         new AlertDialog.Builder(this)
                 .setTitle(R.string.login_title)
                 .setView(dialogView)
@@ -106,8 +112,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void proceedWithInitialization() {
-        // Initialize the Activity-scoped ViewModel so Fragments can share data
-        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         setupNavigation();
 

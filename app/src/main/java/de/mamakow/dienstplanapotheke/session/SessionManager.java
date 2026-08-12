@@ -1,9 +1,12 @@
 package de.mamakow.dienstplanapotheke.session;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Base64;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -19,7 +22,8 @@ import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 
 public class SessionManager {
     private static final String TAG = "SessionManager";
-    private static final String PREFS_NAME = "AppPreferences";
+    private static final String PREFS_NAME = "AppPreferences"; // Für URL & Nutzername
+    private static final String SECURE_PREFS_NAME = "SecurePreferences"; // Für Passwort & Token
     private static final String TOKEN_KEY = "session_token";
     private static final String BASE_URL_KEY = "base_url";
     private static final String USERNAME_KEY = "username";
@@ -30,6 +34,7 @@ public class SessionManager {
     private static final String USER_EMPLOYEE_KEY = "user_employee_key";
     private static final String USER_PRIVILEGES_KEY = "user_privileges";
     private final SharedPreferences sharedPreferences;
+    private final SharedPreferences securePreferences;
     private final NetworkHandler networkHandler;
     private final Context context;
     private boolean loginIsRunning = false;
@@ -37,12 +42,13 @@ public class SessionManager {
     public SessionManager(Context context) {
         this.context = context;
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        securePreferences = context.getSharedPreferences(SECURE_PREFS_NAME, Context.MODE_PRIVATE);
         networkHandler = new NetworkHandler(context, this);
     }
 
     public void performLogin() {
         String username = sharedPreferences.getString(USERNAME_KEY, null);
-        String password = sharedPreferences.getString(PASSWORD_KEY, null);
+        String password = securePreferences.getString(PASSWORD_KEY, null);
 
         if (username != null && password != null) {
             performLogin(username, password, null);
@@ -86,7 +92,7 @@ public class SessionManager {
         RetrofitNetworkHandler retrofitHandler = new RetrofitNetworkHandler(context);
         retrofitHandler.fetchCurrentUser(token, new RetrofitNetworkHandler.NetworkResponseCallback<UserData>() {
             @Override
-            public void onSuccess(UserData userData) {
+            public void onSuccess(@NonNull UserData userData) {
                 Log.d(TAG, "Benutzerdaten erfolgreich geladen.");
                 saveFullUserData(userData);
                 Log.i(TAG, "Benutzerdaten erfolgreich geladen und gespeichert.");
@@ -94,7 +100,7 @@ public class SessionManager {
             }
 
             @Override
-            public void onError(String errorMessage) {
+            public void onError(@NonNull String errorMessage) {
                 Log.e(TAG, "Fehler beim Laden der Benutzerdaten: " + errorMessage);
                 // Auch wenn UserData fehlschlägt, haben wir den Token, also Login war technisch erfolgreich.
                 // Aber wir rufen callback.onSuccess auf, damit die App weitermachen kann.
@@ -104,10 +110,8 @@ public class SessionManager {
     }
 
     private void saveCredentials(String username, String password) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(USERNAME_KEY, username);
-        editor.putString(PASSWORD_KEY, password);
-        editor.apply();
+        sharedPreferences.edit().putString(USERNAME_KEY, username).apply();
+        securePreferences.edit().putString(PASSWORD_KEY, password).apply(); // Sicher speichern
     }
 
     public void saveUserData(int userId, String userName) {
@@ -145,6 +149,11 @@ public class SessionManager {
         return sharedPreferences.getInt(USER_EMPLOYEE_KEY, -1);
     }
 
+    // In SessionManager.java
+    public String getStoredUsername() {
+        return sharedPreferences.getString(USERNAME_KEY, "");
+    }
+
     public String getUserDisplayName() {
         return sharedPreferences.getString(USER_DISPLAY_NAME_KEY, "");
     }
@@ -159,29 +168,12 @@ public class SessionManager {
         return new Gson().fromJson(json, Privileges.class);
     }
 
+    @SuppressLint("ApplySharedPref")
     public void saveToken(String token) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        SharedPreferences.Editor editor = securePreferences.edit();
         editor.putString(TOKEN_KEY, token);
         editor.commit(); // Immediate commit to storage, not using .apply()!
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, "Token in SharedPreferences gespeichert: " + (token != null ? "vorhanden" : "null"));
-        Log.d(TAG, "Token:" + token);
-        logTokenContent(sharedPreferences.getString(TOKEN_KEY, null));
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-        Log.d(TAG, ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
-
-
+        logTokenContent(securePreferences.getString(TOKEN_KEY, null));
     }
 
     public boolean isNotLoggedIn() {
@@ -194,7 +186,7 @@ public class SessionManager {
     }
 
     public String getSessionToken() {
-        return sharedPreferences.getString(TOKEN_KEY, null);
+        return securePreferences.getString(TOKEN_KEY, null);
     }
 
     public void saveBaseUrl(String url) {
@@ -226,14 +218,19 @@ public class SessionManager {
     public void logout() {
         Log.d(TAG, "Logout: Lösche Token und Credentials aus SharedPreferences");
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove(TOKEN_KEY);
+        // 1. Benutzerbezogene (aber nicht kritische) Daten löschen
         editor.remove(USERNAME_KEY);
-        editor.remove(PASSWORD_KEY);
         editor.remove(USER_ID_KEY);
         editor.remove(USER_DISPLAY_NAME_KEY);
         editor.remove(USER_EMAIL_KEY);
         editor.remove(USER_PRIVILEGES_KEY);
         editor.apply();
+
+        // 2. Sensible Daten löschen
+        securePreferences.edit()
+                .remove(TOKEN_KEY)
+                .remove(PASSWORD_KEY)
+                .apply();
     }
 
     /**
