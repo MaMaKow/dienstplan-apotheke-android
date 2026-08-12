@@ -120,8 +120,8 @@ public class HeatmapAdapter extends ListAdapter<AbsenceMonthData, HeatmapAdapter
         }
 
         public void bind(AbsenceMonthData monthData) {
-            String monthName = monthData.getYearMonth().getMonth().getDisplayName(TextStyle.FULL, Locale.GERMAN);
-            titleView.setText(monthName + " " + monthData.getYearMonth().getYear());
+            String monthName = monthData.getYearMonth().getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
+            titleView.setText(context.getString(R.string.month_year_format, monthName, monthData.getYearMonth().getYear()));
 
             daysGrid.removeAllViews();
 

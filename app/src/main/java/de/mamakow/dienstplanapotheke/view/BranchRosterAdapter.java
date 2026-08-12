@@ -88,17 +88,20 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
 
                 // Mitarbeiter-Name
                 Employee employee = employeeMap.get(item.getEmployeeKey());
-                String name = (employee != null) ? employee.getEmployeeFullName() : "Unbekannt (" + item.getEmployeeKey() + ")";
+                String name = (employee != null) ? employee.getEmployeeFullName() : itemView.getContext().getString(R.string.unknown_with_id, item.getEmployeeKey());
                 textViewEmployeeName.setText(name);
 
                 // Schichtzeit
-                String shiftTime = item.getDutyStartDateTime().format(timeFormatter) + " - " + item.getDutyEndDateTime().format(timeFormatter);
-                textViewShiftTime.setText(shiftTime);
+                String start = item.getDutyStartDateTime().format(timeFormatter);
+                String end = item.getDutyEndDateTime().format(timeFormatter);
+                textViewShiftTime.setText(itemView.getContext().getString(R.string.time_range_format, start, end));
 
                 // Pause (falls vorhanden)
                 if (item.getBreakStartDateTime() != null && item.getBreakEndDateTime() != null) {
-                    String pauseText = "Pause: " + item.getBreakStartDateTime().format(timeFormatter) + " - " + item.getBreakEndDateTime().format(timeFormatter);
-                    textViewPause.setText(pauseText);
+                    String pStart = item.getBreakStartDateTime().format(timeFormatter);
+                    String pEnd = item.getBreakEndDateTime().format(timeFormatter);
+                    String pauseRange = itemView.getContext().getString(R.string.time_range_format, pStart, pEnd);
+                    textViewPause.setText(itemView.getContext().getString(R.string.pause_format, pauseRange));
                     textViewPause.setVisibility(View.VISIBLE);
                 } else {
                     textViewPause.setVisibility(View.GONE);

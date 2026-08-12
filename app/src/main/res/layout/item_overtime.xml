@@ -41,6 +41,7 @@
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:layout_marginEnd="8dp"
+            android:contentDescription="@string/balance"
             app:layout_constraintBottom_toBottomOf="@+id/tvOvertimeBalance"
             app:layout_constraintEnd_toStartOf="@id/tvOvertimeBalance"
             app:layout_constraintTop_toTopOf="@+id/tvOvertimeBalance"

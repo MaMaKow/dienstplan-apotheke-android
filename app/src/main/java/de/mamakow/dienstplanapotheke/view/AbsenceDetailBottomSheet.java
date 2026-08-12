@@ -84,9 +84,14 @@ public class AbsenceDetailBottomSheet extends BottomSheetDialogFragment {
         }
 
         void bind(AbsenceWithName item) {
-            name.setText(item.getEmployeeName() + " (" + item.getProfession() + ")");
+            name.setText(itemView.getContext().getString(R.string.employee_name_with_profession, item.getEmployeeName(), item.getProfession()));
             reason.setText(item.getAbsence().getAbsenceTypeString());
-            status.setText("Status: " + (item.getAbsence().getComment() != null ? "Genehmigt" : "Offen")); // Platzhalter Logik
+
+            String statusValue = item.getAbsence().getComment() != null ?
+                    itemView.getContext().getString(R.string.status_approved) :
+                    itemView.getContext().getString(R.string.status_pending);
+            status.setText(itemView.getContext().getString(R.string.absence_status_format, statusValue));
+
             comment.setText(item.getAbsence().getComment());
             comment.setVisibility(item.getAbsence().getComment() != null && !item.getAbsence().getComment().isEmpty() ? View.VISIBLE : View.GONE);
         }

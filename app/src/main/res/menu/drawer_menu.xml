@@ -20,7 +20,7 @@
             android:title="@string/filialen_administration" />
     </group>
 
-    <item android:title="System">
+    <item android:title="@string/system">
         <menu>
             <item
                 android:id="@+id/nav_settings"

@@ -5,41 +5,72 @@
     <string name="api_base_url" translatable="false">
         https://martin-mandelkow.de/development/testing/dienstplan-test/src/php/restful-api/
     </string>
+
+    <!-- Header for a specific week. Example: "Woche vom 01.01.2023" -->
     <string name="woche_vom">"Woche vom %1$s"</string>
-    <string name="mitarbeiter_ansicht">Mitarbeiter</string>
-    <string name="filial_ansicht">Filialen</string>
-    <string name="vorheriges_datum">Vorheriges Datum</string>
-    <string name="datum_waehlen">Datum wählen</string>
-    <string name="naechstes_datum">Nächstes Datum</string>
-    <string name="employee_profession_icon">Mitarbeiter Berufsicon</string>
-    <string name="mitarbeiter_name">Mitarbeiter Name</string>
-    <string name="abwesenheiten_ansicht">Abwesenheiten</string>
+    <string name="mitarbeiter_ansicht">Employees</string>
+    <string name="filial_ansicht">Branches</string>
+    <string name="vorheriges_datum">Previous Date</string>
+    <string name="datum_waehlen">Select Date</string>
+    <string name="naechstes_datum">Next Date</string>
+    <string name="employee_profession_icon">Employee profession icon</string>
+    <string name="mitarbeiter_name">Employee Name</string>
+
+    <!-- Combines name and profession. Example: "Max Mustermann (Pharmacist)" -->
+    <string name="employee_name_with_profession">%1$s (%2$s)</string>
+    <string name="abwesenheiten_ansicht">Absences</string>
     <string name="team_heatmap_ansicht">Team Heatmap</string>
-    <string name="jahresansicht_abwesenheiten">Jahresübersicht Abwesenheiten:</string>
-    <string name="team_heatmap_title">Team Abwesenheits-Heatmap</string>
+    <string name="jahresansicht_abwesenheiten">Yearly Absence Overview:</string>
+    <string name="team_heatmap_title">Team Absence Heatmap</string>
     <string name="login_title">Login</string>
-    <string name="username_hint">Benutzername</string>
-    <string name="password_hint">Passwort</string>
-    <string name="login_button">Einloggen</string>
-    <string name="login_failed">Login fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.</string>
-    <string name="kommentar">Kommentar</string>
-    <string name="reason">Grund</string>
-    <string name="date">Datum</string>
-    <string name="balance">Saldo</string>
-    <string name="hours">Stunden</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="login_failed">Login failed. Please check your credentials.</string>
+    <string name="kommentar">Comment</string>
+    <string name="reason">Reason</string>
+    <string name="date">Date</string>
+    <string name="balance">Balance</string>
+    <string name="hours">Hours</string>
     <string name="hours_of_overtime">Hours of overtime</string>
-    <string name="mein_plan">Mein Plan</string>
-    <string name="abwesenheiten">Abwesenheiten</string>
-    <string name="filiale">Filiale</string>
-    <string name="überstunden">überstunden</string>
-    <string name="grundplan_mitarbeiter">Grundplan Mitarbeiter</string>
-    <string name="grundplan_filialen">Grundplan Filialen</string>
-    <string name="notdienste">Notdienste</string>
-    <string name="filialen_administration">Filialen-Administration</string>
-    <string name="einstellungen">Einstellungen</string>
-    <string name="abmelden">Abmelden</string>
-    <string name="dienstplan_apotheke">Dienstplan Apotheke</string>
+    <string name="mein_plan">My Plan</string>
+    <string name="abwesenheiten">Absences</string>
+    <string name="filiale">Branch</string>
+    <string name="überstunden">overtime</string>
+    <string name="grundplan_mitarbeiter">Employee Base Roster</string>
+    <string name="grundplan_filialen">Branch Base Roster</string>
+    <string name="notdienste">Emergency Duties</string>
+    <string name="filialen_administration">Branch Administration</string>
+    <string name="einstellungen">Settings</string>
+    <string name="abmelden">Logout</string>
+    <string name="dienstplan_apotheke">Pharmacy Duty Roster</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="filiale_format">Filiale: %s</string>
+
+    <!-- Label for a branch. Example: "Branch: Main Pharmacy" -->
+    <string name="filiale_format">Branch: %s</string>
+    <string name="system">System</string>
+
+    <!-- Status of an absence request. Example: "Status: Approved" -->
+    <string name="absence_status_format">Status: %1$s</string>
+    <string name="status_approved">Approved</string>
+    <string name="status_pending">Pending</string>
+
+    <!-- Title for a month in the calendar. Example: "January 2023" -->
+    <string name="month_year_format">%1$s %2$d</string>
+
+    <!-- Hour display with two decimal places. Example: "1.50 h" -->
+    <string name="hours_unit_format">%1$.2f h</string>
+    <!-- Overtime change with sign (plus/minus). Example: "+1.5 h" or "-2.0 h" -->
+    <string name="hours_signed_unit_format">%1$+.1f h</string>
+
+    <!-- Date range for multi-day events. Example: "01.01.2023 - 07.01.2023" -->
+    <string name="date_range_format">%1$s - %2$s</string>
+    <!-- Time range for shifts. Example: "08:00 - 12:00" -->
+    <string name="time_range_format">%1$s - %2$s</string>
+    <!-- Break time in roster. Example: "Pause: 12:00 - 12:30" -->
+    <string name="pause_format">Pause: %1$s</string>
+
+    <!-- Fallback when an ID cannot be resolved. Example: "Unknown (5)" -->
+    <string name="unknown_with_id">Unknown (%1$d)</string>
 </resources>

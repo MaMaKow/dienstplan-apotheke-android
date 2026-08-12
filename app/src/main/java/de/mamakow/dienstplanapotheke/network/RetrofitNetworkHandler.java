@@ -3,6 +3,9 @@ package de.mamakow.dienstplanapotheke.network;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -36,12 +39,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitNetworkHandler {
 
-    final String TAG = "RetrofitNetHandler";
+    private static final String TAG = "RetrofitNetHandler";
     private final RosterApi rosterApi;
     private final Gson gson;
     private final SessionManager sessionManager;
 
-    public RetrofitNetworkHandler(Context context) {
+    public RetrofitNetworkHandler(@NonNull Context context) {
         sessionManager = new SessionManager(context);
         String apiBaseUrl = sessionManager.getApiBaseUrl();
 
@@ -50,7 +53,6 @@ public class RetrofitNetworkHandler {
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(logging)
                 .addInterceptor(chain -> {
-                    // Hol dir das aktuellste Token direkt aus dem SessionManager
                     String token = sessionManager.getSessionToken();
                     okhttp3.Request.Builder builder = chain.request().newBuilder();
 
@@ -92,7 +94,7 @@ public class RetrofitNetworkHandler {
         rosterApi = retrofit.create(RosterApi.class);
     }
 
-    private <T> void handleListResponse(Response<JsonElement> response, Type listType, NetworkResponseCallback<List<T>> callback) {
+    private <T> void handleListResponse(@NonNull Response<JsonElement> response, @NonNull Type listType, @NonNull NetworkResponseCallback<List<T>> callback) {
         if (response.code() == 401) {
             Log.w(TAG, "401 Unauthorized - Starte automatischen Re-Login");
             sessionManager.performLogin();
@@ -101,10 +103,14 @@ public class RetrofitNetworkHandler {
         }
         if (response.isSuccessful() && response.body() != null) {
             JsonElement body = response.body();
-            if (body.isJsonArray()) {
+            if (body != null && body.isJsonArray()) {
                 List<T> data = gson.fromJson(body, listType);
-                callback.onSuccess(data);
-            } else if (body.isJsonObject()) {
+                if (data != null) {
+                    callback.onSuccess(data);
+                } else {
+                    callback.onError("Fehler beim Deserialisieren der Liste");
+                }
+            } else if (body != null && body.isJsonObject()) {
                 JsonObject obj = body.getAsJsonObject();
                 if (obj.has("error")) {
                     callback.onError(obj.get("error").getAsString());
@@ -119,16 +125,20 @@ public class RetrofitNetworkHandler {
         }
     }
 
-    private <T> void handleSingleResponse(Response<JsonElement> response, Type type, NetworkResponseCallback<T> callback) {
+    private <T> void handleSingleResponse(@NonNull Response<JsonElement> response, @NonNull Type type, @NonNull NetworkResponseCallback<T> callback) {
         if (response.isSuccessful() && response.body() != null) {
             JsonElement body = response.body();
-            if (body.isJsonObject()) {
+            if (body != null && body.isJsonObject()) {
                 JsonObject obj = body.getAsJsonObject();
                 if (obj.has("error")) {
                     callback.onError(obj.get("error").getAsString());
                 } else {
                     T data = gson.fromJson(body, type);
-                    callback.onSuccess(data);
+                    if (data != null) {
+                        callback.onSuccess(data);
+                    } else {
+                        callback.onError("Fehler beim Deserialisieren des Objekts");
+                    }
                 }
             } else {
                 callback.onError("Unerwartetes Format");
@@ -138,16 +148,17 @@ public class RetrofitNetworkHandler {
         }
     }
 
-    public void fetchRoster(String token, String dateStart, String dateEnd, Integer employeeKey, Integer branchId, NetworkResponseCallback<List<RosterItem>> callback) {
+    public void fetchRoster(@NonNull String token, @NonNull String dateStart, @NonNull String dateEnd, @Nullable Integer employeeKey, @Nullable Integer branchId, @NonNull NetworkResponseCallback<List<RosterItem>> callback) {
         Log.i(TAG, "fetchRoster() gestartet: " + dateStart + " bis " + dateEnd);
         rosterApi.getRoster("Bearer " + token, dateStart, dateEnd, employeeKey, branchId).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isJsonArray()) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
+                JsonElement body = response.body();
+                if (response.isSuccessful() && body != null && body.isJsonArray()) {
                     List<RosterItem> allItems = new ArrayList<>();
-                    for (JsonElement dayElement : response.body().getAsJsonArray()) {
+                    for (JsonElement dayElement : body.getAsJsonArray()) {
                         DayWrapper day = gson.fromJson(dayElement, DayWrapper.class);
-                        if (day.roster != null) allItems.addAll(day.roster);
+                        if (day != null && day.roster != null) allItems.addAll(day.roster);
                     }
                     callback.onSuccess(allItems);
                 } else {
@@ -157,214 +168,228 @@ public class RetrofitNetworkHandler {
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void updateRoster(int branchId, String dateStart, String dateEnd, Map<String, List<RosterItemDto>> data, NetworkResponseCallback<String> callback) {
+    public void updateRoster(int branchId, @NonNull String dateStart, @NonNull String dateEnd, @NonNull Map<String, List<RosterItemDto>> data, @NonNull NetworkResponseCallback<String> callback) {
         RosterUpdateRequest request = new RosterUpdateRequest(data);
         rosterApi.updateRoster(branchId, dateStart, dateEnd, request).enqueue(new Callback<RosterUpdateResponse>() {
             @Override
-            public void onResponse(Call<RosterUpdateResponse> call, Response<RosterUpdateResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    callback.onSuccess(response.body().message);
+            public void onResponse(@NonNull Call<RosterUpdateResponse> call, @NonNull Response<RosterUpdateResponse> response) {
+                RosterUpdateResponse body = response.body();
+                if (response.isSuccessful() && body != null && body.message != null) {
+                    callback.onSuccess(body.message);
                 } else {
                     callback.onError("Update fehlgeschlagen: " + response.code());
                 }
             }
 
             @Override
-            public void onFailure(Call<RosterUpdateResponse> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<RosterUpdateResponse> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void deleteRoster(int branchId, String date, NetworkResponseCallback<String> callback) {
+    public void deleteRoster(int branchId, @NonNull String date, @NonNull NetworkResponseCallback<String> callback) {
         rosterApi.deleteRoster(branchId, date).enqueue(new Callback<RosterUpdateResponse>() {
             @Override
-            public void onResponse(Call<RosterUpdateResponse> call, Response<RosterUpdateResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    callback.onSuccess(response.body().message);
+            public void onResponse(@NonNull Call<RosterUpdateResponse> call, @NonNull Response<RosterUpdateResponse> response) {
+                RosterUpdateResponse body = response.body();
+                if (response.isSuccessful() && body != null && body.message != null) {
+                    callback.onSuccess(body.message);
                 } else {
                     callback.onError("Löschen fehlgeschlagen: " + response.code());
                 }
             }
 
             @Override
-            public void onFailure(Call<RosterUpdateResponse> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<RosterUpdateResponse> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchEmployees(String token, NetworkResponseCallback<List<Employee>> callback) {
+    public void fetchEmployees(@NonNull String token, @NonNull NetworkResponseCallback<List<Employee>> callback) {
         Log.i(TAG, "fetchEmployees() gestartet");
         rosterApi.getEmployees("Bearer " + token).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Employee>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchBranches(String token, NetworkResponseCallback<List<Branch>> callback) {
+    public void fetchBranches(@NonNull String token, @NonNull NetworkResponseCallback<List<Branch>> callback) {
         Log.i(TAG, "fetchBranches() gestartet");
         rosterApi.getBranches("Bearer " + token).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Branch>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchBranchById(String token, int branchId, NetworkResponseCallback<Branch> callback) {
+    public void fetchBranchById(@NonNull String token, int branchId, @NonNull NetworkResponseCallback<Branch> callback) {
         Log.i(TAG, "fetchBranchById() gestartet für ID: " + branchId);
         rosterApi.getBranchById("Bearer " + token, branchId).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleSingleResponse(response, Branch.class, callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchAbsences(String token, NetworkResponseCallback<List<Absence>> callback) {
+    public void fetchAbsences(@NonNull String token, @NonNull NetworkResponseCallback<List<Absence>> callback) {
         Log.i(TAG, "fetchAbsences() gestartet");
         rosterApi.getAllAbsences("Bearer " + token).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Absence>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchEmployeeOvertimes(int employeeKey, String token, NetworkResponseCallback<List<Overtime>> callback) {
+    public void fetchEmployeeOvertimes(int employeeKey, @NonNull String token, @NonNull NetworkResponseCallback<List<Overtime>> callback) {
         Log.i(TAG, "fetchOvertimes() gestartet");
         rosterApi.getEmployeeOvertimes("Bearer " + token, employeeKey).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Overtime>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchAbsencesByYear(String token, int year, NetworkResponseCallback<List<Absence>> callback) {
+    public void fetchAbsencesByYear(@NonNull String token, int year, @NonNull NetworkResponseCallback<List<Absence>> callback) {
         Log.i(TAG, "fetchAbsencesByYear() gestartet für Jahr: " + year);
         rosterApi.getAbsencesByYear("Bearer " + token, year).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Absence>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchEmployeeAbsences(String token, int employeeKey, Integer year, NetworkResponseCallback<List<Absence>> callback) {
+    public void fetchEmployeeAbsences(@NonNull String token, int employeeKey, @Nullable Integer year, @NonNull NetworkResponseCallback<List<Absence>> callback) {
         Log.i(TAG, "fetchEmployeeAbsences() gestartet für Mitarbeiter: " + employeeKey + " Jahr: " + year);
         rosterApi.getEmployeeAbsences("Bearer " + token, employeeKey, year).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Absence>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchEmployeeOvertimes(String token, int employeeKey, NetworkResponseCallback<List<Overtime>> callback) {
+    public void fetchEmployeeOvertimes(@NonNull String token, int employeeKey, @NonNull NetworkResponseCallback<List<Overtime>> callback) {
         Log.i(TAG, "fetchEmployeeOvertimes() gestartet für Mitarbeiter: " + employeeKey);
         rosterApi.getEmployeeOvertimes("Bearer " + token, employeeKey).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleListResponse(response, new TypeToken<List<Overtime>>() {
                 }.getType(), callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
-    public void fetchCurrentUser(String token, NetworkResponseCallback<UserData> callback) {
+    public void fetchCurrentUser(@NonNull String token, @NonNull NetworkResponseCallback<UserData> callback) {
         Log.i(TAG, "fetchCurrentUser() gestartet");
         rosterApi.getCurrentUser("Bearer " + token).enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
                 handleSingleResponse(response, UserData.class, callback);
             }
 
             @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                callback.onError(t.getMessage());
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                String message = t.getMessage();
+                callback.onError(message != null ? message : "Netzwerkfehler");
             }
         });
     }
 
 
     public interface NetworkResponseCallback<T> {
-        void onSuccess(T data);
+        void onSuccess(@NonNull T data);
 
-        void onError(String errorMessage);
+        void onError(@NonNull String errorMessage);
     }
 
     private static class DayWrapper {
-        String date;
+        @Nullable
         List<RosterItem> roster;
     }
 
     public static class RosterUpdateResponse {
+        @Nullable
         public String message;
     }
 
     public static class RosterUpdateRequest {
-        public Map<String, List<RosterItemDto>> data;
+        @NonNull
+        public final Map<String, List<RosterItemDto>> data;
 
-        public RosterUpdateRequest(Map<String, List<RosterItemDto>> data) {
+        public RosterUpdateRequest(@NonNull Map<String, List<RosterItemDto>> data) {
             this.data = data;
         }
     }
-
-
 }

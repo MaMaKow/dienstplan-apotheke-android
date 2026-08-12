@@ -159,8 +159,9 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
                 TextView textViewComment = subItemView.findViewById(R.id.textViewComment);
 
                 // Schichtzeit
-                String shiftTime = item.getDutyStartDateTime().format(timeFormatter) + " - " + item.getDutyEndDateTime().format(timeFormatter);
-                textViewShiftTime.setText(shiftTime);
+                String start = item.getDutyStartDateTime().format(timeFormatter);
+                String end = item.getDutyEndDateTime().format(timeFormatter);
+                textViewShiftTime.setText(itemView.getContext().getString(R.string.time_range_format, start, end));
 
                 // Filiale
                 int employeeKey = item.getEmployeeKey();
@@ -174,7 +175,7 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
 
                 if (!isDefaultBranch) {
                     Branch branch = branchMap.get(branchId);
-                    String branchName = (branch != null) ? branch.getBranchName() : "Unbekannt (" + branchId + ")";
+                    String branchName = (branch != null) ? branch.getBranchName() : itemView.getContext().getString(R.string.unknown_with_id, branchId);
                     textViewBranch.setText(itemView.getContext().getString(R.string.filiale_format, branchName));
                     textViewBranch.setVisibility(View.VISIBLE);
                 } else {
@@ -183,8 +184,10 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
 
                 // Pause (falls vorhanden)
                 if (item.getBreakStartDateTime() != null && item.getBreakEndDateTime() != null) {
-                    String pauseText = "Pause: " + item.getBreakStartDateTime().format(timeFormatter) + " - " + item.getBreakEndDateTime().format(timeFormatter);
-                    textViewPause.setText(pauseText);
+                    String pStart = item.getBreakStartDateTime().format(timeFormatter);
+                    String pEnd = item.getBreakEndDateTime().format(timeFormatter);
+                    String pauseRange = itemView.getContext().getString(R.string.time_range_format, pStart, pEnd);
+                    textViewPause.setText(itemView.getContext().getString(R.string.pause_format, pauseRange));
                     textViewPause.setVisibility(View.VISIBLE);
                 } else {
                     textViewPause.setVisibility(View.GONE);

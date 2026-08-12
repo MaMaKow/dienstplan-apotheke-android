@@ -1,30 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Name der App -->
     <string name="app_name">Dienstplan Apotheke</string>
+
+    <!-- Ersatztext, falls der Name einer Filiale in den Daten fehlt -->
     <string name="unknown_branch">Unbekannte Filiale</string>
+
+    <!-- Überschrift für die Wochennavigation. Beispiel: "Woche vom 01.01.2023" -->
     <string name="woche_vom">Woche vom %1$s</string>
+
+    <!-- Beschriftungen der Haupt-Navigationsbereiche -->
     <string name="mitarbeiter_ansicht">Mitarbeiter-Ansicht</string>
     <string name="filial_ansicht">Filial-Ansicht</string>
+
+    <!-- Accessibility-Beschreibungen für Navigations-Buttons -->
     <string name="vorheriges_datum">Vorheriges Datum</string>
     <string name="datum_waehlen">Datum wählen</string>
     <string name="naechstes_datum">Nächstes Datum</string>
+
+    <!-- Accessibility: Beschreibung des Icons, das den Beruf symbolisiert -->
     <string name="employee_profession_icon">Mitarbeiter Berufsicon</string>
     <string name="mitarbeiter_name">Mitarbeiter Name</string>
+
+    <!-- Kombination aus Name und Beruf in Listen. Beispiel: "Max Mustermann (Apotheker)" -->
+    <string name="employee_name_with_profession">%1$s (%2$s)</string>
+
+    <!-- Navigation und Titel für Abwesenheiten -->
     <string name="abwesenheiten_ansicht">Abwesenheiten</string>
     <string name="team_heatmap_ansicht">Team Heatmap</string>
     <string name="jahresansicht_abwesenheiten">Jahresübersicht Abwesenheiten:</string>
     <string name="team_heatmap_title">Team Abwesenheits-Heatmap</string>
+
+    <!-- Login-Dialog -->
     <string name="login_title">Login</string>
     <string name="username_hint">Benutzername</string>
     <string name="password_hint">Passwort</string>
     <string name="login_button">Einloggen</string>
     <string name="login_failed">Login fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.</string>
+
+    <!-- Allgemeine Begriffe -->
     <string name="kommentar">Kommentar</string>
     <string name="reason">Grund</string>
     <string name="date">Datum</string>
+
+    <!-- Überstunden-Konto Begriffe -->
     <string name="balance">Saldo</string>
     <string name="hours">Stunden</string>
     <string name="hours_of_overtime">Überstunden</string>
+
+    <!-- Navigation Drawer Einträge -->
     <string name="mein_plan">Mein Plan</string>
     <string name="notdienste">Notdienste</string>
     <string name="abwesenheiten">Abwesenheiten</string>
@@ -35,8 +59,36 @@
     <string name="filialen_administration">Filialen-Administration</string>
     <string name="einstellungen">Einstellungen</string>
     <string name="abmelden">Abmelden</string>
+
+    <!-- Accessibility für das Navigationsmenü (Drawer) -->
     <string name="dienstplan_apotheke">Dienstplan Apotheke</string>
     <string name="navigation_drawer_open">Navigationsmenü öffnen</string>
     <string name="navigation_drawer_close">Navigationsmenü schließen</string>
+
+    <!-- Anzeige der Filialzugehörigkeit. Beispiel: "Filiale: Hauptapotheke" -->
     <string name="filiale_format">Filiale: %s</string>
+    <string name="system">System</string>
+
+    <!-- Status von Abwesenheitsanträgen. Beispiel: "Status: Genehmigt" -->
+    <string name="absence_status_format">Status: %1$s</string>
+    <string name="status_approved">Genehmigt</string>
+    <string name="status_pending">Offen</string>
+
+    <!-- Monatsüberschrift in der Heatmap. Beispiel: "Januar 2023" -->
+    <string name="month_year_format">%1$s %2$d</string>
+
+    <!-- Formatierung von Arbeitsstunden. Beispiel: "38.50 h" -->
+    <string name="hours_unit_format">%1$.2f h</string>
+    <!-- Überstundenänderung mit Vorzeichen. Beispiel: "+1.5 h" oder "-2.0 h" -->
+    <string name="hours_signed_unit_format">%1$+.1f h</string>
+
+    <!-- Datumsbereich für mehrtägige Abwesenheiten. Beispiel: "01.01.2023 - 07.01.2023" -->
+    <string name="date_range_format">%1$s - %2$s</string>
+    <!-- Arbeitszeitbereich. Beispiel: "08:00 - 12:00" -->
+    <string name="time_range_format">%1$s - %2$s</string>
+    <!-- Anzeige einer Pause. Beispiel: "Pause: 12:00 - 12:30" -->
+    <string name="pause_format">Pause: %1$s</string>
+
+    <!-- Fallback-Text für unbekannte IDs. Beispiel: "Unbekannt (ID: 5)" -->
+    <string name="unknown_with_id">Unbekannt (%1$d)</string>
 </resources>

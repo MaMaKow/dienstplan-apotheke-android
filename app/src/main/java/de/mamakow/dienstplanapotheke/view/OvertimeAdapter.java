@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.model.Overtime;
@@ -38,14 +37,14 @@ public class OvertimeAdapter extends RecyclerView.Adapter<OvertimeAdapter.Overti
     public void onBindViewHolder(@NonNull OvertimeViewHolder holder, int position) {
         Overtime overtime = overtimes.get(position);
         // Balance:
-        holder.tvOvertimeBalance.setText(String.format(Locale.GERMANY, "%.2f h", overtime.getBalance()));
+        holder.tvOvertimeBalance.setText(holder.itemView.getContext().getString(R.string.hours_unit_format, overtime.getBalance()));
         if (overtime.getBalance() >= 0) {
             holder.tvOvertimeBalance.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.md_theme_primary));
         } else {
             holder.tvOvertimeBalance.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.md_theme_error));
         }
         // Hours:
-        holder.tvOvertimeHours.setText(String.format(Locale.GERMANY, "%+.1f h", overtime.getHours()));
+        holder.tvOvertimeHours.setText(holder.itemView.getContext().getString(R.string.hours_signed_unit_format, overtime.getHours()));
         if (overtime.getHours() >= 0) {
             holder.tvOvertimeHours.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.md_theme_primary));
         } else {
