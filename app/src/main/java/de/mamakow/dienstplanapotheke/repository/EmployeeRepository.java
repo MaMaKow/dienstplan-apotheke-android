@@ -2,6 +2,7 @@ package de.mamakow.dienstplanapotheke.repository;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Transformations;
 
@@ -29,15 +30,6 @@ public class EmployeeRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    private void handleNetworkError(String errorMessage) {
-        Log.e(TAG, "Network error: " + errorMessage);
-        if (errorMessage != null && (errorMessage.contains("Invalid token") || errorMessage.contains("Token expired"))) {
-            Log.i(TAG, "Token issue detected. Triggering re-login.");
-            sessionManager.logout();
-            sessionManager.performLogin();
-        }
-    }
-
     public Employee getEmployeeByEmployeeKey(int employeeKey) {
         return employeeDao.getEmployeeByEmployeeKey(employeeKey);
     }
@@ -46,27 +38,28 @@ public class EmployeeRepository {
         return employeeDao.getEmployeeById(id);
     }
 
-    public void fetchAndSaveEmployees() {
+    public void fetchAndSaveEmployees(RetrofitNetworkHandler.NetworkResponseCallback<Void> callback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
-            Log.e(TAG, "Token is null, cannot fetch employees.");
             sessionManager.performLogin();
+            if (callback != null) callback.onError("Nicht angemeldet.");
             return;
         }
 
         networkHandler.fetchEmployees(token, new RetrofitNetworkHandler.NetworkResponseCallback<List<Employee>>() {
             @Override
-            public void onSuccess(List<Employee> employees) {
+            public void onSuccess(@NonNull List<Employee> employees) {
                 executor.execute(() -> {
                     employeeDao.clearEmployees();
                     employeeDao.insertEmployees(employees);
-                    Log.d(TAG, "Employees saved to database: " + employees.size());
+                    if (callback != null) callback.onSuccess(null);
                 });
             }
 
             @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
+            public void onError(@NonNull String errorMessage) {
+                Log.e(TAG, "Network error: " + errorMessage);
+                if (callback != null) callback.onError(errorMessage);
             }
         });
     }
@@ -75,15 +68,8 @@ public class EmployeeRepository {
         return employeeDao.getAllEmployees();
     }
 
-    private LiveData<List<Employee>> getAllEmployeesLiveData() {
-        return employeeDao.getAllEmployeesLiveData();
-    }
-
-    // Das Repository verwandelt die Liste in eine Workforce
     public LiveData<Workforce> getWorkforceLiveData() {
-        // Wir nehmen den "Stream" der Liste und mappen ihn auf das Workforce-Objekt
         return Transformations.map(employeeDao.getAllEmployeesLiveData(), employees -> {
-            Log.d(TAG, "Mapping " + (employees != null ? employees.size() : 0) + " employees to Workforce");
             return new Workforce(employees);
         });
     }

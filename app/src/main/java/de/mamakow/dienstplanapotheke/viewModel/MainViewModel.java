@@ -28,8 +28,11 @@ import de.mamakow.dienstplanapotheke.repository.EmployeeRepository;
 import de.mamakow.dienstplanapotheke.repository.OvertimeRepository;
 import de.mamakow.dienstplanapotheke.repository.RosterRepository;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
+import de.mamakow.dienstplanapotheke.util.Event;
+import de.mamakow.dienstplanapotheke.util.UIError;
 
 public class MainViewModel extends AndroidViewModel {
+    private static final String TAG = "MainViewModel";
     private final RosterRepository rosterRepository;
     private final EmployeeRepository employeeRepository;
     private final BranchRepository branchRepository;
@@ -37,7 +40,7 @@ public class MainViewModel extends AndroidViewModel {
     private final OvertimeRepository overtimeRepository;
 
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
-    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    private final MutableLiveData<Event<UIError>> uiError = new MutableLiveData<>();
 
     // Shared state for Fragments
     private final MutableLiveData<LocalDate> selectedDate = new MutableLiveData<>(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)));
@@ -136,40 +139,82 @@ public class MainViewModel extends AndroidViewModel {
         return isLoading;
     }
 
+    public LiveData<Event<UIError>> getUiError() {
+        return uiError;
+    }
 
     public void fetchOvertimes(int employeeKey) {
-        overtimeRepository.fetchAndSaveEmployeeOvertimes(employeeKey);
+        overtimeRepository.fetchAndSaveEmployeeOvertimes(employeeKey, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+            @Override
+            public void onSuccess(@NonNull Void data) {
+            }
+
+            @Override
+            public void onError(@NonNull String message) {
+                postError(message, UIError.Type.TOAST, () -> fetchOvertimes(employeeKey));
+            }
+        });
     }
 
     public void refreshData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {
         isLoading.setValue(true);
-        errorMessage.setValue(null);
 
-        employeeRepository.fetchAndSaveEmployees();
-        branchRepository.fetchAndSaveBranches();
+        employeeRepository.fetchAndSaveEmployees(new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+            @Override
+            public void onSuccess(@NonNull Void data) {
+            }
+
+            @Override
+            public void onError(@NonNull String message) {
+                postError(message, UIError.Type.TOAST, null);
+            }
+        });
+
+        branchRepository.fetchAndSaveBranches(new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+            @Override
+            public void onSuccess(@NonNull Void data) {
+            }
+
+            @Override
+            public void onError(@NonNull String message) {
+                postError(message, UIError.Type.TOAST, null);
+            }
+        });
 
         if (employeeKey == null && branchId == null) {
             isLoading.postValue(false);
         } else {
-            rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<>() {
+            rosterRepository.fetchAndSaveRosterData(startDate.toString(), endDate.toString(), employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
                 @Override
-                public void onSuccess(Void data) {
+                public void onSuccess(@NonNull Void data) {
                     isLoading.postValue(false);
                 }
 
                 @Override
-                public void onError(String message) {
+                public void onError(@NonNull String message) {
                     isLoading.postValue(false);
-                    errorMessage.postValue(message);
+                    postError(message, UIError.Type.SNACKBAR_WITH_RETRY, () -> refreshData(startDate, endDate, employeeKey, branchId));
                 }
             });
         }
 
         if (employeeKey != null) {
-            // Updated to use the year from the provided date range (usually the current view year)
             int year = startDate.getYear();
-            absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey, year);
+            absenceRepository.fetchAndSaveEmployeeAbsences(employeeKey, year, new RetrofitNetworkHandler.NetworkResponseCallback<Void>() {
+                @Override
+                public void onSuccess(@NonNull Void data) {
+                }
+
+                @Override
+                public void onError(@NonNull String message) {
+                    postError(message, UIError.Type.TOAST, null);
+                }
+            });
         }
+    }
+
+    private void postError(String message, UIError.Type type, Runnable retryAction) {
+        uiError.postValue(new Event<>(new UIError(message, type, retryAction)));
     }
 
     // Helper class for combining filters

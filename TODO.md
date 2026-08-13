@@ -8,17 +8,17 @@
 
 ## 2. Leere Zustände (Empty States)
 
-- [ ] **Platzhalter-Ansicht**: Anzeige eines Texts (z.B. "Keine Dienste gefunden") oder einer
+- [x] **Platzhalter-Ansicht**: Anzeige eines Texts (z.B. "Keine Dienste gefunden") oder einer
   Illustration, wenn die Liste leer ist.
 
 ## 3. Fehlerkommunikation
 
-- [ ] **Snackbars/Toasts**: Einblendung von Fehlermeldungen bei Netzwerkproblemen oder Token-Fehlern
+- [x] **Snackbars/Toasts**: Einblendung von Fehlermeldungen bei Netzwerkproblemen oder Token-Fehlern
   statt nur im Logcat zu protokollieren.
 
 ## 4. Modernisierung der Auswahl (Material Design)
 
-- [ ] **Material Button Toggle Group**: Ersetzen der RadioButtons durch moderne Toggle-Buttons für
+- [x] **Material Button Toggle Group**: Ersetzen der RadioButtons durch moderne Toggle-Buttons für
   die Sicht-Umschaltung.
 
 ## 5. Datumsnavigation

@@ -7,13 +7,17 @@ appcompat = "1.7.1"
 material = "1.14.0"
 activity = "1.13.0"
 constraintlayout = "2.2.2"
-okhttp = "5.4.0"
-retrofit = "3.0.0"
+okhttp = "4.12.0"
+retrofit = "2.11.0"
 roomCommon = "2.8.4"
 roomRuntime = "2.8.4"
 roomCompiler = "2.8.4"
 archCoreTesting = "2.2.0"
 swiperefreshlayout = "1.2.0"
+mockito = "5.11.0"
+mockitoInline = "5.2.0"
+robolectric = "4.12.1"
+mockwebserver = "4.12.0"
 
 [libraries]
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
@@ -34,6 +38,11 @@ room-common = { group = "androidx.room", name = "room-common", version.ref = "ro
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
 arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockito-inline = { group = "org.mockito", name = "mockito-inline", version.ref = "mockitoInline" }
+mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockito" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

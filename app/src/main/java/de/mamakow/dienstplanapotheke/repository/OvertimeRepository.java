@@ -2,6 +2,7 @@ package de.mamakow.dienstplanapotheke.repository;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import java.util.List;
@@ -27,59 +28,27 @@ public class OvertimeRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    private void handleNetworkError(String errorMessage) {
-        Log.e(TAG, "Network error: " + errorMessage);
-        if (errorMessage != null && (errorMessage.contains("Invalid token") || errorMessage.contains("Token expired"))) {
-            Log.i(TAG, "Token issue detected. Triggering re-login.");
-            sessionManager.logout();
-            sessionManager.performLogin();
-        }
-    }
-
-    public void fetchAndSaveOvertimes(int employeeKey) {
+    public void fetchAndSaveEmployeeOvertimes(int employeeKey, RetrofitNetworkHandler.NetworkResponseCallback<Void> callback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
-            Log.e(TAG, "Token is null, cannot fetch overtimes.");
-            sessionManager.performLogin();
-            return;
-        }
-
-        networkHandler.fetchEmployeeOvertimes(employeeKey, token, new RetrofitNetworkHandler.NetworkResponseCallback<List<Overtime>>() {
-            @Override
-            public void onSuccess(List<Overtime> overtimes) {
-                executor.execute(() -> {
-                    overtimeDao.clearOvertimes();
-                    overtimeDao.insertOvertimes(overtimes);
-                    Log.d(TAG, "Overtimes saved to database: " + overtimes.size());
-                });
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
-            }
-        });
-    }
-
-    public void fetchAndSaveEmployeeOvertimes(int employeeKey) {
-        String token = sessionManager.getSessionToken();
-        if (token == null) {
+            if (callback != null) callback.onError("Nicht angemeldet.");
             return;
         }
 
         networkHandler.fetchEmployeeOvertimes(token, employeeKey, new RetrofitNetworkHandler.NetworkResponseCallback<List<Overtime>>() {
             @Override
-            public void onSuccess(List<Overtime> overtimes) {
+            public void onSuccess(@NonNull List<Overtime> overtimes) {
                 executor.execute(() -> {
                     overtimeDao.deleteOvertimesByEmployeeId(employeeKey);
                     overtimeDao.insertOvertimes(overtimes);
-                    Log.d(TAG, "Employee overtimes saved to database: " + overtimes.size());
+                    if (callback != null) callback.onSuccess(null);
                 });
             }
 
             @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
+            public void onError(@NonNull String errorMessage) {
+                Log.e(TAG, "Error fetching overtimes: " + errorMessage);
+                if (callback != null) callback.onError(errorMessage);
             }
         });
     }
@@ -87,7 +56,6 @@ public class OvertimeRepository {
     public LiveData<List<Overtime>> getAllOvertimesLiveData() {
         return overtimeDao.getAllOvertimesLiveData();
     }
-
 
     public LiveData<List<Overtime>> getOvertimesByEmployeeId(int employeeKey) {
         return overtimeDao.getOvertimesByEmployeeId(employeeKey);

@@ -2,6 +2,7 @@ package de.mamakow.dienstplanapotheke.repository;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import java.util.List;
@@ -27,68 +28,32 @@ public class BranchRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    private void handleNetworkError(String errorMessage) {
-        Log.e(TAG, "Network error: " + errorMessage);
-        if (errorMessage != null && (errorMessage.contains("Invalid token") || errorMessage.contains("Token expired"))) {
-            Log.i(TAG, "Token issue detected. Triggering re-login.");
-            sessionManager.logout();
-            sessionManager.performLogin();
-        }
-    }
-
     public LiveData<List<Branch>> getAllBranches() {
         return branchDao.getAllBranches();
     }
 
-    public LiveData<Branch> getBranchById(int id) {
-        return branchDao.getBranchById(id);
-    }
-
-    public void fetchAndSaveBranches() {
+    public void fetchAndSaveBranches(RetrofitNetworkHandler.NetworkResponseCallback<Void> callback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
-            Log.e(TAG, "Token is null, cannot fetch branches.");
             sessionManager.performLogin();
+            if (callback != null) callback.onError("Nicht angemeldet.");
             return;
         }
 
         networkHandler.fetchBranches(token, new RetrofitNetworkHandler.NetworkResponseCallback<List<Branch>>() {
             @Override
-            public void onSuccess(List<Branch> branches) {
+            public void onSuccess(@NonNull List<Branch> branches) {
                 executor.execute(() -> {
                     branchDao.clearBranches();
                     branchDao.insertBranches(branches);
-                    Log.d(TAG, "Branches saved to database: " + branches.size());
+                    if (callback != null) callback.onSuccess(null);
                 });
             }
 
             @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
-            }
-        });
-    }
-
-    public void fetchAndSaveBranchById(int branchId) {
-        String token = sessionManager.getSessionToken();
-        if (token == null) {
-            Log.e(TAG, "Token is null, cannot fetch branch.");
-            sessionManager.performLogin();
-            return;
-        }
-
-        networkHandler.fetchBranchById(token, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<Branch>() {
-            @Override
-            public void onSuccess(Branch branch) {
-                executor.execute(() -> {
-                    branchDao.insertBranch(branch);
-                    Log.d(TAG, "Branch " + branchId + " saved to database.");
-                });
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
+            public void onError(@NonNull String errorMessage) {
+                Log.e(TAG, "Network error: " + errorMessage);
+                if (callback != null) callback.onError(errorMessage);
             }
         });
     }

@@ -29,6 +29,26 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+}
+
+// Konfiguration, um Tests bei jedem Build auszuführen
+tasks.withType<Test> {
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
+
+// Macht assemble-Tasks von den Tests abhängig
+tasks.matching { it.name.startsWith("assemble") }.configureEach {
+    dependsOn(tasks.matching { it.name.startsWith("test") && it.name.endsWith("UnitTest") })
 }
 
 dependencies {
@@ -42,16 +62,21 @@ dependencies {
     implementation(libs.room.common)
     implementation(libs.room.runtime)
     implementation(libs.swiperefreshlayout)
+
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.arch.core.testing)
+
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.arch.core.testing)
+    androidTestImplementation(libs.mockito.android)
+    androidTestImplementation(libs.mockwebserver)
 
     implementation(libs.dotenv)
-    // Retrofit
     implementation(libs.retrofit)
-
-    // Gson Converter für Retrofit
     implementation(libs.converter.gson)
     annotationProcessor(libs.room.compiler)
 }

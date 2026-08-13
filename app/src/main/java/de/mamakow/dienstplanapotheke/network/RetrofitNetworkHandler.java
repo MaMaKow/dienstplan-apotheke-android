@@ -98,37 +98,42 @@ public class RetrofitNetworkHandler {
         if (response.code() == 401) {
             Log.w(TAG, "401 Unauthorized - Starte automatischen Re-Login");
             sessionManager.performLogin();
-            callback.onError("Sitzung abgelaufen. Bitte versuchen Sie es gleich erneut.");
+            callback.onError("Sitzung abgelaufen. Bitte melden Sie sich erneut an.");
             return;
         }
         if (response.isSuccessful() && response.body() != null) {
             JsonElement body = response.body();
-            if (body != null && body.isJsonArray()) {
+            if (body.isJsonArray()) {
                 List<T> data = gson.fromJson(body, listType);
                 if (data != null) {
                     callback.onSuccess(data);
                 } else {
-                    callback.onError("Fehler beim Deserialisieren der Liste");
+                    callback.onError("Fehler beim Verarbeiten der Daten.");
                 }
-            } else if (body != null && body.isJsonObject()) {
+            } else if (body.isJsonObject()) {
                 JsonObject obj = body.getAsJsonObject();
                 if (obj.has("error")) {
                     callback.onError(obj.get("error").getAsString());
                 } else {
-                    callback.onError("Unerwartetes JSON-Objekt");
+                    callback.onError("Unerwartetes Antwortformat vom Server.");
                 }
             } else {
-                callback.onError("Unerwartetes Format");
+                callback.onError("Unerwartetes Format.");
             }
         } else {
-            callback.onError("Fehler " + response.code());
+            callback.onError(mapErrorCodeToMessage(response.code()));
         }
     }
 
     private <T> void handleSingleResponse(@NonNull Response<JsonElement> response, @NonNull Type type, @NonNull NetworkResponseCallback<T> callback) {
+        if (response.code() == 401) {
+            sessionManager.performLogin();
+            callback.onError("Sitzung abgelaufen. Bitte melden Sie sich erneut an.");
+            return;
+        }
         if (response.isSuccessful() && response.body() != null) {
             JsonElement body = response.body();
-            if (body != null && body.isJsonObject()) {
+            if (body.isJsonObject()) {
                 JsonObject obj = body.getAsJsonObject();
                 if (obj.has("error")) {
                     callback.onError(obj.get("error").getAsString());
@@ -137,14 +142,33 @@ public class RetrofitNetworkHandler {
                     if (data != null) {
                         callback.onSuccess(data);
                     } else {
-                        callback.onError("Fehler beim Deserialisieren des Objekts");
+                        callback.onError("Fehler beim Verarbeiten der Daten.");
                     }
                 }
             } else {
-                callback.onError("Unerwartetes Format");
+                callback.onError("Unerwartetes Format.");
             }
         } else {
-            callback.onError("Fehler " + response.code());
+            callback.onError(mapErrorCodeToMessage(response.code()));
+        }
+    }
+
+    public String mapErrorCodeToMessage(int code) {
+        return switch (code) {
+            case 404 -> "Die angeforderten Daten konnten nicht gefunden werden.";
+            case 500 -> "Server-Fehler. Bitte versuchen Sie es später erneut.";
+            case 503 -> "Der Server ist aktuell nicht erreichbar.";
+            default -> "Ein unerwarteter Fehler ist aufgetreten (Fehler " + code + ").";
+        };
+    }
+
+    public String mapThrowableToMessage(Throwable t) {
+        if (t instanceof java.net.SocketTimeoutException) {
+            return "Die Verbindung zum Server dauert zu lange. Bitte prüfen Sie Ihr Internet.";
+        } else if (t instanceof java.net.UnknownHostException) {
+            return "Keine Internetverbindung verfügbar.";
+        } else {
+            return "Netzwerkfehler: " + (t.getMessage() != null ? t.getMessage() : "Unbekannt");
         }
     }
 
@@ -169,8 +193,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -184,14 +207,13 @@ public class RetrofitNetworkHandler {
                 if (response.isSuccessful() && body != null && body.message != null) {
                     callback.onSuccess(body.message);
                 } else {
-                    callback.onError("Update fehlgeschlagen: " + response.code());
+                    callback.onError(mapErrorCodeToMessage(response.code()));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<RosterUpdateResponse> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -204,14 +226,13 @@ public class RetrofitNetworkHandler {
                 if (response.isSuccessful() && body != null && body.message != null) {
                     callback.onSuccess(body.message);
                 } else {
-                    callback.onError("Löschen fehlgeschlagen: " + response.code());
+                    callback.onError(mapErrorCodeToMessage(response.code()));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<RosterUpdateResponse> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -227,8 +248,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -244,8 +264,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -260,8 +279,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -277,8 +295,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -294,8 +311,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -311,8 +327,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -328,8 +343,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -345,8 +359,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }
@@ -361,8 +374,7 @@ public class RetrofitNetworkHandler {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                String message = t.getMessage();
-                callback.onError(message != null ? message : "Netzwerkfehler");
+                callback.onError(mapThrowableToMessage(t));
             }
         });
     }

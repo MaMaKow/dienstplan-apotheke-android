@@ -2,6 +2,7 @@ package de.mamakow.dienstplanapotheke.repository;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import java.util.List;
@@ -27,63 +28,53 @@ public class AbsenceRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    private void handleNetworkError(String errorMessage) {
-        Log.e(TAG, "Network error: " + errorMessage);
-        if (errorMessage != null && (errorMessage.contains("Invalid token") || errorMessage.contains("Token expired"))) {
-            Log.i(TAG, "Token issue detected. Triggering re-login.");
-            sessionManager.logout();
-            sessionManager.performLogin();
-        }
-    }
-
-    public void fetchAndSaveAbsences() {
+    public void fetchAndSaveAbsences(RetrofitNetworkHandler.NetworkResponseCallback<Void> callback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
-            Log.e(TAG, "Token is null, cannot fetch absences.");
             sessionManager.performLogin();
+            if (callback != null) callback.onError("Nicht angemeldet.");
             return;
         }
 
         networkHandler.fetchAbsences(token, new RetrofitNetworkHandler.NetworkResponseCallback<List<Absence>>() {
             @Override
-            public void onSuccess(List<Absence> absences) {
+            public void onSuccess(@NonNull List<Absence> absences) {
                 executor.execute(() -> {
                     absenceDao.clearAbsences();
                     absenceDao.insertAbsences(absences);
-                    Log.d(TAG, "Absences saved to database: " + absences.size());
+                    if (callback != null) callback.onSuccess(null);
                 });
             }
 
             @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
+            public void onError(@NonNull String errorMessage) {
+                Log.e(TAG, "Error fetching absences: " + errorMessage);
+                if (callback != null) callback.onError(errorMessage);
             }
         });
     }
 
-    public void fetchAndSaveEmployeeAbsences(int employeeKey, int year) {
+    public void fetchAndSaveEmployeeAbsences(int employeeKey, int year, RetrofitNetworkHandler.NetworkResponseCallback<Void> callback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
+            if (callback != null) callback.onError("Nicht angemeldet.");
             return;
         }
 
         networkHandler.fetchEmployeeAbsences(token, employeeKey, year, new RetrofitNetworkHandler.NetworkResponseCallback<List<Absence>>() {
             @Override
-            public void onSuccess(List<Absence> absences) {
+            public void onSuccess(@NonNull List<Absence> absences) {
                 executor.execute(() -> {
-                    // Note: We might want to only delete absences for that specific year if the API filter is strict.
-                    // But if fetchEmployeeAbsences(year) returns all absences for that employee in that year,
-                    // we should probably clear those specifically. 
-                    // For now, let's stick to the current logic but with the year parameter in the API call.
                     absenceDao.deleteAbsencesByEmployeeId(employeeKey);
                     absenceDao.insertAbsences(absences);
-                    Log.d(TAG, "Employee absences for year " + year + " saved to database: " + absences.size());
+                    if (callback != null) callback.onSuccess(null);
                 });
             }
 
             @Override
-            public void onError(String errorMessage) {
-                handleNetworkError(errorMessage);
+            public void onError(@NonNull String errorMessage) {
+                Log.e(TAG, "Error fetching employee absences: " + errorMessage);
+                if (callback != null) callback.onError(errorMessage);
             }
         });
     }

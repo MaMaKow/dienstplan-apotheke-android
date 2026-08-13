@@ -12,16 +12,20 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
+import de.mamakow.dienstplanapotheke.util.UIError;
 import de.mamakow.dienstplanapotheke.view.AbsenceFragment;
 import de.mamakow.dienstplanapotheke.view.OvertimeFragment;
 import de.mamakow.dienstplanapotheke.view.RosterBranchFragment;
 import de.mamakow.dienstplanapotheke.view.RosterEmployeeFragment;
+import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 /**
  * MainActivity handles Session Management and Fragment Navigation.
@@ -30,17 +34,43 @@ import de.mamakow.dienstplanapotheke.view.RosterEmployeeFragment;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private MainViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+        observeErrors();
+
         SessionManager sessionManager = new SessionManager(this);
         if (!sessionManager.isBaseUrlSet()) {
             showUrlInputDialog(sessionManager);
         } else {
             checkLoginAndProceed(sessionManager);
+        }
+    }
+
+    private void observeErrors() {
+        viewModel.getUiError().observe(this, event -> {
+            UIError error = event.getContentIfNotHandled();
+            if (error != null) {
+                showError(error);
+            }
+        });
+    }
+
+    private void showError(UIError error) {
+        View contextView = findViewById(android.R.id.content);
+        if (error.getType() == UIError.Type.TOAST) {
+            Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
+        } else {
+            Snackbar snackbar = Snackbar.make(contextView, error.getMessage(), Snackbar.LENGTH_LONG);
+            if (error.getType() == UIError.Type.SNACKBAR_WITH_RETRY && error.getRetryAction() != null) {
+                snackbar.setAction("Wiederholen", v -> error.getRetryAction().run());
+            }
+            snackbar.show();
         }
     }
 
@@ -76,8 +106,6 @@ public class MainActivity extends AppCompatActivity {
         String savedUsername = sessionManager.getStoredUsername();
         if (!savedUsername.isEmpty()) {
             editTextUsername.setText(savedUsername);
-            // Optional: Fokus direkt auf das Passwort-Feld setzen,
-            // da der Name ja schon da ist
             editTextPassword.requestFocus();
         }
 
@@ -112,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void proceedWithInitialization() {
-
         setupNavigation();
 
         // Initial fragment load
