@@ -6,11 +6,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.Spinner;
+import android.widget.AutoCompleteTextView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +17,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -34,10 +34,12 @@ public class AbsenceFragment extends Fragment {
     private AbsenceAdapter absenceAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
     private View progressBar;
-    private Spinner employeeSpinner;
-    private Button buttonDatePicker;
-    private ImageButton buttonPrevDate;
-    private ImageButton buttonNextDate;
+    private AutoCompleteTextView employeeSpinner;
+    private MaterialButton buttonDatePicker;
+    private MaterialButton buttonPrevDate;
+    private MaterialButton buttonNextDate;
+    private View emptyStateView;
+    private TextView emptyStateTextView;
 
     private List<Employee> availableEmployees = new ArrayList<>();
 
@@ -58,6 +60,11 @@ public class AbsenceFragment extends Fragment {
         buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
         buttonPrevDate = view.findViewById(R.id.buttonPrevDate);
         buttonNextDate = view.findViewById(R.id.buttonNextDate);
+        emptyStateView = view.findViewById(R.id.emptyStateView);
+        emptyStateTextView = view.findViewById(R.id.emptyStateTextView);
+
+        // Customize empty state for Absences
+        emptyStateTextView.setText(R.string.keine_abwesenheiten_gefunden);
 
         absenceAdapter = new AbsenceAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -98,20 +105,13 @@ public class AbsenceFragment extends Fragment {
     }
 
     private void setupEmployeeSpinner() {
-        employeeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position >= 0 && position < availableEmployees.size()) {
-                    Employee selectedEmployee = availableEmployees.get(position);
-                    Employee currentEmployee = viewModel.getSelectedEmployee().getValue();
-                    if (currentEmployee == null || currentEmployee.getEmployeeKey() != selectedEmployee.getEmployeeKey()) {
-                        viewModel.setSelectedEmployee(selectedEmployee);
-                    }
+        employeeSpinner.setOnItemClickListener((parent, view, position, id) -> {
+            if (position >= 0 && position < availableEmployees.size()) {
+                Employee selectedEmployee = availableEmployees.get(position);
+                Employee currentEmployee = viewModel.getSelectedEmployee().getValue();
+                if (currentEmployee == null || currentEmployee.getEmployeeKey() != selectedEmployee.getEmployeeKey()) {
+                    viewModel.setSelectedEmployee(selectedEmployee);
                 }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
     }
@@ -121,6 +121,9 @@ public class AbsenceFragment extends Fragment {
         viewModel.getAbsences().observe(getViewLifecycleOwner(), absences -> {
             if (absences != null) {
                 absenceAdapter.setAbsences(absences);
+                emptyStateView.setVisibility(absences.isEmpty() ? View.VISIBLE : View.GONE);
+            } else {
+                emptyStateView.setVisibility(View.VISIBLE);
             }
         });
 
@@ -156,22 +159,22 @@ public class AbsenceFragment extends Fragment {
             if (!isLoading) {
                 swipeRefreshLayout.setRefreshing(false);
             }
+            if (isLoading) {
+                emptyStateView.setVisibility(View.GONE);
+            }
         });
     }
 
     private void updateSpinnerAdapter(List<String> names) {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_item, names);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        employeeSpinner.setOnItemSelectedListener(null);
+                android.R.layout.simple_dropdown_item_1line, names);
         employeeSpinner.setAdapter(adapter);
-        setupEmployeeSpinner();
     }
 
     private void updateSpinnerSelection(Employee employee) {
         for (int i = 0; i < availableEmployees.size(); i++) {
             if (availableEmployees.get(i).getEmployeeKey() == employee.getEmployeeKey()) {
-                employeeSpinner.setSelection(i);
+                employeeSpinner.setText(availableEmployees.get(i).getEmployeeFullName(), false);
                 break;
             }
         }

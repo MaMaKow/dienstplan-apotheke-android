@@ -88,6 +88,12 @@ public class Employee {
     }
 
     public String getEmployeeFullName() {
+        if (employeeLastName == null || employeeLastName.trim().isEmpty()) {
+            return employeeFirstName != null ? employeeFirstName : "";
+        }
+        if (employeeFirstName == null || employeeFirstName.trim().isEmpty()) {
+            return employeeLastName;
+        }
         return employeeFirstName + " " + employeeLastName;
     }
 

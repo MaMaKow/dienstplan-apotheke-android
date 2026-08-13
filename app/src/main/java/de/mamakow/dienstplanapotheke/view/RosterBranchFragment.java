@@ -5,11 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.Spinner;
+import android.widget.AutoCompleteTextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +15,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -37,10 +36,11 @@ public class RosterBranchFragment extends Fragment {
     private BranchRosterAdapter branchRosterAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
     private View progressBar;
-    private Spinner branchSpinner;
-    private Button buttonDatePicker;
-    private ImageButton buttonPrevDate;
-    private ImageButton buttonNextDate;
+    private AutoCompleteTextView branchSpinner;
+    private MaterialButton buttonDatePicker;
+    private MaterialButton buttonPrevDate;
+    private MaterialButton buttonNextDate;
+    private View emptyStateView;
     private List<Branch> availableBranches = new ArrayList<>();
 
     @Nullable
@@ -60,6 +60,7 @@ public class RosterBranchFragment extends Fragment {
         buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
         buttonPrevDate = view.findViewById(R.id.buttonPrevDate);
         buttonNextDate = view.findViewById(R.id.buttonNextDate);
+        emptyStateView = view.findViewById(R.id.emptyStateView);
 
         branchRosterAdapter = new BranchRosterAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -100,23 +101,14 @@ public class RosterBranchFragment extends Fragment {
     }
 
     private void setupBranchSpinner() {
-        branchSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position >= 0 && position < availableBranches.size()) {
-                    Branch selectedBranch = availableBranches.get(position);
-                    Branch currentBranch = viewModel.getSelectedBranch().getValue();
+        branchSpinner.setOnItemClickListener((parent, view, position, id) -> {
+            if (position >= 0 && position < availableBranches.size()) {
+                Branch selectedBranch = availableBranches.get(position);
+                Branch currentBranch = viewModel.getSelectedBranch().getValue();
 
-                    // Guard to prevent infinite loop and redundant refreshes
-                    if (currentBranch == null || currentBranch.getBranchId() != selectedBranch.getBranchId()) {
-                        viewModel.setSelectedBranch(selectedBranch);
-                        refreshData();
-                    }
+                if (currentBranch == null || currentBranch.getBranchId() != selectedBranch.getBranchId()) {
+                    viewModel.setSelectedBranch(selectedBranch);
                 }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
     }
@@ -137,11 +129,15 @@ public class RosterBranchFragment extends Fragment {
         });
 
         viewModel.getBranches().observe(getViewLifecycleOwner(), branches -> {
-            if (branches != null) {
+            if (branches != null && !branches.isEmpty()) {
                 availableBranches = branches;
                 updateSpinnerAdapter(branches.stream().map(Branch::getBranchName).collect(Collectors.toList()));
+
                 Branch current = viewModel.getSelectedBranch().getValue();
-                if (current != null) {
+                if (current == null) {
+                    // Pre-select first branch if none is selected
+                    viewModel.setSelectedBranch(branches.get(0));
+                } else {
                     updateSpinnerSelection(current);
                 }
             }
@@ -156,6 +152,10 @@ public class RosterBranchFragment extends Fragment {
         viewModel.getRoster().observe(getViewLifecycleOwner(), roster -> {
             if (roster != null) {
                 branchRosterAdapter.setRosterDays(roster.getRosterDays());
+                boolean isEmpty = roster.getRosterDays().isEmpty();
+                emptyStateView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            } else {
+                emptyStateView.setVisibility(View.VISIBLE);
             }
         });
 
@@ -166,26 +166,20 @@ public class RosterBranchFragment extends Fragment {
             if (!isLoading) {
                 swipeRefreshLayout.setRefreshing(false);
             }
+            if (isLoading) {
+                emptyStateView.setVisibility(View.GONE);
+            }
         });
     }
 
     private void updateSpinnerAdapter(List<String> names) {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_item, names);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-        branchSpinner.setOnItemSelectedListener(null);
+                android.R.layout.simple_dropdown_item_1line, names);
         branchSpinner.setAdapter(adapter);
-        setupBranchSpinner();
     }
 
     private void updateSpinnerSelection(Branch branch) {
-        for (int i = 0; i < availableBranches.size(); i++) {
-            if (availableBranches.get(i).getBranchId() == branch.getBranchId()) {
-                branchSpinner.setSelection(i);
-                break;
-            }
-        }
+        branchSpinner.setText(branch.getBranchName(), false);
     }
 
     private void refreshData() {

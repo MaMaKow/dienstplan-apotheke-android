@@ -17,6 +17,7 @@
     <string name="vorheriges_datum">Vorheriges Datum</string>
     <string name="datum_waehlen">Datum wählen</string>
     <string name="naechstes_datum">Nächstes Datum</string>
+    <string name="heute">Heute</string>
 
     <!-- Accessibility: Beschreibung des Icons, das den Beruf symbolisiert -->
     <string name="employee_profession_icon">Mitarbeiter Berufsicon</string>
@@ -53,7 +54,7 @@
     <string name="notdienste">Notdienste</string>
     <string name="abwesenheiten">Abwesenheiten</string>
     <string name="filiale">Filiale</string>
-    <string name="überstunden">überstunden</string>
+    <string name="überstunden">Überstunden</string>
     <string name="grundplan_mitarbeiter">Grundplan Mitarbeiter</string>
     <string name="grundplan_filialen">Grundplan Filialen</string>
     <string name="filialen_administration">Filialen-Administration</string>
@@ -91,6 +92,14 @@
 
     <!-- Fallback-Text für unbekannte IDs. Beispiel: "Unbekannt (ID: 5)" -->
     <string name="unknown_with_id">Unbekannt (%1$d)</string>
+
+    <!-- Empty States -->
     <string name="keine_dienste_gefunden">Keine Dienste gefunden</string>
+    <string name="keine_abwesenheiten_gefunden">Keine Abwesenheiten gefunden</string>
+    <string name="keine_ueberstunden_gefunden">Keine Überstunden gefunden</string>
+    <string name="empty_state_description">Wähle einen anderen Zeitraum oder eine andere Person aus.</string>
+    <string name="empty_branch_state_description">Wähle einen anderen Zeitraum oder eine andere Filiale aus.</string>
+
     <string name="mitarbeiter_auswaehlen">Mitarbeiter auswählen</string>
+    <string name="filiale_waehlen">Filiale wählen</string>
 </resources>
