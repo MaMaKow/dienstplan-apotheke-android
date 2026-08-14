@@ -1,5 +1,7 @@
 package de.mamakow.dienstplanapotheke.view;
 
+import android.content.res.Configuration;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,9 +25,11 @@ import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.RosterDay;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 import de.mamakow.dienstplanapotheke.model.Workforce;
+import de.mamakow.dienstplanapotheke.util.ColorUtils;
 
 public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapter.RosterViewHolder> {
 
+    private static final String TAG = "BranchRosterAdapter";
     private final Map<Integer, Employee> employeeMap = new HashMap<>();
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd.MM.yyyy", Locale.GERMAN);
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -35,17 +39,19 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
     }
 
     public void setRosterDays(List<RosterDay> rosterDays) {
-        this.rosterDays = rosterDays;
+        this.rosterDays = rosterDays != null ? rosterDays : new ArrayList<>();
+        Log.d(TAG, "setRosterDays: " + this.rosterDays.size() + " days received");
         notifyDataSetChanged();
     }
 
     public void setEmployees(Workforce workforce) {
         employeeMap.clear();
-        if (workforce != null) {
+        if (workforce != null && workforce.getEmployees() != null) {
             for (Employee e : workforce.getEmployees()) {
                 employeeMap.put(e.getEmployeeKey(), e);
             }
         }
+        Log.d(TAG, "setEmployees: " + employeeMap.size() + " employees loaded into map");
         notifyDataSetChanged();
     }
 
@@ -68,17 +74,28 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
     }
 
     class RosterViewHolder extends RecyclerView.ViewHolder {
+        private final TextView textViewDate;
         private final LinearLayout layoutRosterItems;
 
         public RosterViewHolder(@NonNull View itemView) {
             super(itemView);
+            textViewDate = itemView.findViewById(R.id.textViewDate);
             layoutRosterItems = itemView.findViewById(R.id.layoutRosterItems);
         }
 
         public void bind(RosterDay rosterDay) {
+            if (textViewDate != null) {
+                textViewDate.setText(rosterDay.getLocalDate().format(dateFormatter));
+            }
             layoutRosterItems.removeAllViews();
 
-            for (RosterItem item : rosterDay.getRosterItems()) {
+            boolean isDarkMode = (itemView.getContext().getResources().getConfiguration().uiMode
+                    & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+
+            List<RosterItem> items = rosterDay.getRosterItems();
+            Log.d(TAG, "bind: Day " + rosterDay.getLocalDate() + " has " + items.size() + " items. Map size: " + employeeMap.size());
+
+            for (RosterItem item : items) {
                 View subItemView = LayoutInflater.from(itemView.getContext()).inflate(R.layout.item_roster_shift_branch, layoutRosterItems, false);
 
                 TextView textViewEmployeeName = subItemView.findViewById(R.id.textViewEmployeeName);
@@ -86,17 +103,15 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
                 TextView textViewPause = subItemView.findViewById(R.id.textViewPause);
                 TextView textViewComment = subItemView.findViewById(R.id.textViewComment);
 
-                // Mitarbeiter-Name
+                // Data binding
                 Employee employee = employeeMap.get(item.getEmployeeKey());
                 String name = (employee != null) ? employee.getEmployeeFullName() : itemView.getContext().getString(R.string.unknown_with_id, item.getEmployeeKey());
                 textViewEmployeeName.setText(name);
 
-                // Schichtzeit
                 String start = item.getDutyStartDateTime().format(timeFormatter);
                 String end = item.getDutyEndDateTime().format(timeFormatter);
                 textViewShiftTime.setText(itemView.getContext().getString(R.string.time_range_format, start, end));
 
-                // Pause (falls vorhanden)
                 if (item.getBreakStartDateTime() != null && item.getBreakEndDateTime() != null) {
                     String pStart = item.getBreakStartDateTime().format(timeFormatter);
                     String pEnd = item.getBreakEndDateTime().format(timeFormatter);
@@ -107,46 +122,52 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
                     textViewPause.setVisibility(View.GONE);
                 }
 
-                // Kommentar (falls vorhanden)
                 if (item.getComment() != null && !item.getComment().isEmpty()) {
                     textViewComment.setText(item.getComment());
                     textViewComment.setVisibility(View.VISIBLE);
                 } else {
                     textViewComment.setVisibility(View.GONE);
                 }
+
+                // Color Logic
                 MaterialCardView cardView = (MaterialCardView) subItemView;
+                int backgroundColor;
 
                 if (employee != null) {
                     String profession = employee.getEmployeeProfession();
-                    int backgroundColor = android.graphics.Color.WHITE; // Standard
-                    int fontColor = itemView.getContext().getColor(R.color.md_theme_onSurface);
-
                     if ("Apotheker".equalsIgnoreCase(profession)) {
                         backgroundColor = itemView.getContext().getColor(R.color.md_theme_primaryContainer);
-                        fontColor = itemView.getContext().getColor(R.color.md_theme_onPrimaryContainer);
-                        cardView.setStrokeWidth(4); // Stärkere Umrandung
                     } else if ("Pharmazieingenieur".equalsIgnoreCase(profession) || "PI".equalsIgnoreCase(profession)) {
                         backgroundColor = itemView.getContext().getColor(R.color.md_theme_secondaryContainer);
-                        fontColor = itemView.getContext().getColor(R.color.md_theme_onSecondaryContainer);
-                        cardView.setStrokeWidth(4);
                     } else if ("PTA".equalsIgnoreCase(profession)) {
                         backgroundColor = itemView.getContext().getColor(R.color.md_theme_tertiaryContainer);
-                        fontColor = itemView.getContext().getColor(R.color.md_theme_onTertiaryContainer);
-
-                        cardView.setStrokeWidth(1);
                     } else {
-                        // Nichtpharmazeutisches Personal:
-                        cardView.setStrokeWidth(1);
+                        backgroundColor = isDarkMode
+                                ? itemView.getContext().getColor(R.color.md_theme_surfaceContainerHigh)
+                                : itemView.getContext().getColor(R.color.md_theme_surfaceVariant);
                     }
-                    // 1. Set the background of the card
-                    cardView.setCardBackgroundColor(backgroundColor);
-
-                    // 2. Set the text color of each individual TextView
-                    textViewEmployeeName.setTextColor(fontColor);
-                    textViewShiftTime.setTextColor(fontColor);
-                    textViewPause.setTextColor(fontColor);
-                    textViewComment.setTextColor(fontColor);
+                } else {
+                    backgroundColor = isDarkMode
+                            ? itemView.getContext().getColor(R.color.md_theme_surfaceContainerHigh)
+                            : itemView.getContext().getColor(R.color.md_theme_surfaceVariant);
                 }
+
+                if (isDarkMode) {
+                    backgroundColor = ColorUtils.adjustColorForDarkMode(backgroundColor);
+                }
+
+                int fontColor = ColorUtils.getContrastColor(backgroundColor);
+                int secondaryFontColor = isDarkMode ? itemView.getContext().getColor(R.color.md_theme_onSurfaceVariant) : fontColor;
+
+                cardView.setCardBackgroundColor(backgroundColor);
+                cardView.setStrokeColor(itemView.getContext().getColor(R.color.md_theme_outlineVariant));
+
+                textViewEmployeeName.setTextColor(fontColor);
+                textViewShiftTime.setTextColor(isDarkMode && fontColor == android.graphics.Color.WHITE
+                        ? itemView.getContext().getColor(R.color.md_theme_primary) : fontColor);
+                textViewPause.setTextColor(secondaryFontColor);
+                textViewComment.setTextColor(secondaryFontColor);
+
                 layoutRosterItems.addView(subItemView);
             }
         }

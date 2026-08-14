@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.room.common)
     implementation(libs.room.runtime)
     implementation(libs.swiperefreshlayout)
+    implementation(libs.preference.ktx)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)

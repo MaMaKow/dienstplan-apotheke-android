@@ -2,6 +2,7 @@ package de.mamakow.dienstplanapotheke.repository;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
@@ -104,7 +105,7 @@ public class RosterRepository {
         }
         retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
             @Override
-            public void onSuccess(List<RosterItem> rosterItems) {
+            public void onSuccess(@NonNull List<RosterItem> rosterItems) {
                 executor.execute(() -> {
                     rosterItemDao.clearRosterItems();
                     if (rosterItems != null && !rosterItems.isEmpty()) {
@@ -118,7 +119,7 @@ public class RosterRepository {
             }
 
             @Override
-            public void onError(String errorMessage) {
+            public void onError(@NonNull String errorMessage) {
                 Log.e(TAG, "Error fetching roster data: " + errorMessage);
                 if (errorMessage != null && (errorMessage.contains("Token expired") || errorMessage.contains("Invalid token"))) {
                     Log.i(TAG, "Token issue detected. Triggering re-login.");

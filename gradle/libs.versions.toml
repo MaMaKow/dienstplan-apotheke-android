@@ -18,6 +18,7 @@ mockito = "5.11.0"
 mockitoInline = "5.2.0"
 robolectric = "4.12.1"
 mockwebserver = "4.12.0"
+preference = "1.2.1"
 
 [libraries]
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
@@ -32,6 +33,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 dotenv = "io.github.cdimascio:dotenv-java:3.2.0"
 swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preference" }
 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }

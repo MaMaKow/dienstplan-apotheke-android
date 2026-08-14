@@ -1,0 +1,76 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/pref_header_notifications">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="pref_notifications_enabled"
+            app:summary="@string/pref_summary_notifications_enabled"
+            app:title="@string/pref_title_notifications_enabled" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:dependency="pref_notifications_enabled"
+            app:key="pref_notification_duty_reminder"
+            app:summary="@string/pref_summary_duty_reminder"
+            app:title="@string/pref_title_duty_reminder" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_header_display">
+        <ListPreference
+            app:defaultValue="system"
+            app:entries="@array/pref_theme_entries"
+            app:entryValues="@array/pref_theme_values"
+            app:key="pref_ui_theme_mode"
+            app:title="@string/pref_title_theme" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_header_sync">
+        <ListPreference
+            app:defaultValue="60"
+            app:entries="@array/pref_sync_interval_entries"
+            app:entryValues="@array/pref_sync_interval_values"
+            app:key="pref_sync_interval"
+            app:title="@string/pref_title_sync_interval" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="pref_sync_wifi_only"
+            app:summary="@string/pref_summary_sync_wifi_only"
+            app:title="@string/pref_title_sync_wifi_only" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_header_account">
+        <Preference
+            app:key="pref_user_info"
+            app:selectable="false"
+            app:title="@string/pref_title_user_info" />
+
+        <Preference
+            app:key="pref_user_base_branch"
+            app:selectable="false"
+            app:title="@string/pref_title_base_branch" />
+
+        <Preference
+            app:key="pref_change_password"
+            app:title="@string/pref_title_change_password" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_header_legal">
+        <Preference
+            app:key="pref_licenses"
+            app:title="@string/pref_title_licenses" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/pref_header_support">
+        <Preference
+            app:key="pref_app_version"
+            app:selectable="false"
+            app:title="@string/pref_title_app_version" />
+
+        <Preference
+            app:key="pref_support_email"
+            app:summary="@string/pref_summary_support_email"
+            app:title="@string/pref_title_support_email" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

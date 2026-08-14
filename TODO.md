@@ -29,8 +29,12 @@
 ## 6. Listendesign (RosterAdapter)
 
 - [x] **Material Cards**: Jeden Dienst in einer `CardView` darstellen.
-- [ ] **Farbkodierung**: Akzentfarben je nach Filiale oder Status des Dienstes.
+- [x] **Farbkodierung**: Akzentfarben je nach Filiale oder Status des Dienstes (Dark Mode
+  optimiert).
 - [x] **Icons**: Icons für Berufe (Apotheker, PTA, etc.) und Pausenzeiten zur besseren Scanbarkeit.
+- [x] **Kontrastoptimierung der Kartenfarben für Dark Mode**: Dynamische Anpassung von Sättigung und
+  Textkontrast.
+- [x] **Dark Mode Polishing**: Drawer Header Integration und optimierte Farben für Negativ-Werte.
 
 ## 7. Filter für Wochenansicht
 
@@ -57,3 +61,39 @@
 - [ ] **RosterViewModelTest**: Validierung der Datenaufbereitung für die View.
 - [ ] **EmployeeViewModelTest**: Validierung der Mitarbeiter-Filterlogik.
 - [ ] **MainActivityTest (Espresso)**: Grundlegende UI-Flows (Navigation, Listenanzeige).
+
+## 9. App-Einstellungen & Konfiguration
+
+### Technische Basis
+
+- [x] **Preference Library Integration**: Implementierung des Einstellungs-Fragments mittels
+  `androidx.preference:preference-ktx`.
+- [x] **Settings-Fragment**: Verknüpfung des Menüpunkts `nav_settings` mit einem
+  `PreferenceFragmentCompat`.
+
+### Funktionale Einstellungen
+
+- [ ] **Benachrichtigungs-Management**: Toggle-Schalter für Push-Infos bei Dienstplanänderungen und
+  Notdienst-Erinnerungen.
+- [x] **Anzeige-Optionen**: Auswahl Dark/Light Mode.
+- [ ] **Synchronisation**: Einstellung der Intervalle für den Datenabgleich und "Nur über WLAN"
+  -Option.
+- [ ] **Account-Info**: Anzeige/Änderung des angemeldeten Benutzers, Passwort und der zugewiesenen
+  Stammfiliale.
+- [ ] **Rechtliches**: Integration von Links zur Lizenzdatei.
+- [x] **Support & Info** App-Version: (z.B. v1.0.4)
+- [x] **Feedback/Support** Button, für eine E-Mail an den Administrator
+
+## 10. Fehlerbehebungen
+
+- [ ] **Mein Plan** Beim initialen Laden werden Dienstplandaten ab Jahresanfang angezeigt.
+  Der Filter für die aktuelle Woche funktioniert offensichtlich nicht.
+
+## 11. API Planung
+
+- [ ] **Fehlende Endpunkte im PHP Code** Im PHP fehlen
+    - [ ] **Emailadresse** des Administrators als Kontaktadresse für die App
+    - [ ] **Grundpläne**
+    - [ ] **Notdienste**
+    - [ ] **Passwort-Reset**
+    - [ ] **Personalverwaltung** um selbstständig die eigene Haupt-Filiale zu wählen 

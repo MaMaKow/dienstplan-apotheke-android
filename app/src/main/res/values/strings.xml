@@ -76,4 +76,63 @@
     <string name="empty_branch_state_description">Select another time period or a different branch.</string>
     <string name="mitarbeiter_auswaehlen">Select Employee</string>
     <string name="filiale_waehlen">Filiale wählen</string>
+
+    <!-- Settings Strings -->
+    <string name="pref_header_notifications">Benachrichtigungen</string>
+    <string name="pref_title_notifications_enabled">Push-Benachrichtigungen</string>
+    <string name="pref_summary_notifications_enabled">Erhalte Infos bei Dienstplanänderungen</string>
+    <string name="pref_title_duty_reminder">Notdienst-Erinnerung</string>
+    <string name="pref_summary_duty_reminder">Erinnere mich an bevorstehende Notdienste</string>
+
+    <string name="pref_header_display">Anzeige</string>
+    <string name="pref_title_theme">Design-Modus</string>
+    <string name="pref_theme_light">Hell</string>
+    <string name="pref_theme_dark">Dunkel</string>
+    <string name="pref_theme_system">Systemstandard</string>
+
+    <string name="pref_header_sync">Synchronisation</string>
+    <string name="pref_title_sync_interval">Abgleich-Intervall</string>
+    <string name="pref_title_sync_wifi_only">Nur über WLAN</string>
+    <string name="pref_summary_sync_wifi_only">Synchronisation nur bei bestehender WLAN-Verbindung</string>
+
+    <string name="pref_header_account">Account</string>
+    <string name="pref_title_user_info">Angemeldet als</string>
+    <string name="pref_title_base_branch">Stammfiliale</string>
+    <string name="pref_title_change_password">Passwort ändern</string>
+
+    <string name="pref_header_legal">Rechtliches</string>
+    <string name="pref_title_licenses">Lizenzen</string>
+
+    <string name="pref_header_support">Support &amp; Info</string>
+    <string name="pref_title_app_version">Version</string>
+    <string name="pref_title_support_email">Administrator kontaktieren</string>
+    <string name="pref_summary_support_email">Bei Problemen oder Feedback eine E-Mail senden</string>
+
+    <string name="support_email_address" translatable="false">dienstplan-apotheke-android@martin-mandelkow.de</string>
+    <string name="support_email_subject">Support-Anfrage: Dienstplan Apotheke App</string>
+
+    <!-- Arrays for Preferences -->
+    <string-array name="pref_theme_entries">
+        <item>@string/pref_theme_light</item>
+        <item>@string/pref_theme_dark</item>
+        <item>@string/pref_theme_system</item>
+    </string-array>
+    <string-array name="pref_theme_values" translatable="false">
+        <item>light</item>
+        <item>dark</item>
+        <item>system</item>
+    </string-array>
+
+    <string-array name="pref_sync_interval_entries">
+        <item>15 Minuten</item>
+        <item>1 Stunde</item>
+        <item>6 Stunden</item>
+        <item>Täglich</item>
+    </string-array>
+    <string-array name="pref_sync_interval_values" translatable="false">
+        <item>15</item>
+        <item>60</item>
+        <item>360</item>
+        <item>1440</item>
+    </string-array>
 </resources>

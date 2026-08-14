@@ -1,6 +1,7 @@
 package de.mamakow.dienstplanapotheke;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,7 +13,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
@@ -20,11 +23,13 @@ import com.google.android.material.snackbar.Snackbar;
 
 import de.mamakow.dienstplanapotheke.network.LoginCallback;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
+import de.mamakow.dienstplanapotheke.util.SystemUtils;
 import de.mamakow.dienstplanapotheke.util.UIError;
 import de.mamakow.dienstplanapotheke.view.AbsenceFragment;
 import de.mamakow.dienstplanapotheke.view.OvertimeFragment;
 import de.mamakow.dienstplanapotheke.view.RosterBranchFragment;
 import de.mamakow.dienstplanapotheke.view.RosterEmployeeFragment;
+import de.mamakow.dienstplanapotheke.view.SettingsFragment;
 import de.mamakow.dienstplanapotheke.viewModel.MainViewModel;
 
 /**
@@ -38,6 +43,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Apply theme before super.onCreate and setContentView
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String themeValue = prefs.getString("pref_ui_theme_mode", "system");
+        SystemUtils.applyTheme(themeValue);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -144,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Initial fragment load
         if (getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment) == null) {
-            switchFragment(new RosterEmployeeFragment());
+            switchFragment(new RosterEmployeeFragment(), false);
         }
     }
 
@@ -153,13 +163,13 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_roster_employee) {
-                switchFragment(new RosterEmployeeFragment());
+                switchFragment(new RosterEmployeeFragment(), false);
             } else if (itemId == R.id.nav_roster_branch) {
-                switchFragment(new RosterBranchFragment());
+                switchFragment(new RosterBranchFragment(), false);
             } else if (itemId == R.id.nav_absences) {
-                switchFragment(new AbsenceFragment());
+                switchFragment(new AbsenceFragment(), false);
             } else if (itemId == R.id.nav_overtime) {
-                switchFragment(new OvertimeFragment());
+                switchFragment(new OvertimeFragment(), false);
             }
             return true;
         });
@@ -169,7 +179,12 @@ public class MainActivity extends AppCompatActivity {
 
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_logout) {
+            if (id == R.id.nav_settings) {
+                switchFragment(new SettingsFragment(), true);
+                if (getSupportActionBar() != null) {
+                    getSupportActionBar().setTitle(R.string.einstellungen);
+                }
+            } else if (id == R.id.nav_logout) {
                 SessionManager sessionManager = new SessionManager(this);
                 sessionManager.logout();
                 Intent intent = new Intent(this, MainActivity.class);
@@ -189,10 +204,15 @@ public class MainActivity extends AppCompatActivity {
         toggle.syncState();
     }
 
-    private void switchFragment(Fragment fragment) {
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.nav_host_fragment, fragment)
-                .commit();
+    private void switchFragment(Fragment fragment, boolean addToBackStack) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction()
+                .replace(R.id.nav_host_fragment, fragment);
+
+        if (addToBackStack) {
+            transaction.addToBackStack(null);
+        }
+
+        transaction.commit();
     }
 
     private void showUrlInputDialog(SessionManager sessionManager) {
