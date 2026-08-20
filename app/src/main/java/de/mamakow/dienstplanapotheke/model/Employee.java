@@ -48,7 +48,8 @@ public class Employee {
     @ColumnInfo(name = "employee_abilities_compounding")
     private boolean employeeAbilitiesCompounding;
 
-    @SerializedName(value = "branch_id", alternate = {"branchId", "employee_branch_id"})
+
+    @SerializedName(value = "branch_id", alternate = {"branchId", "employee_branch_id", "branch"})
     @ColumnInfo(name = "employee_branch_id")
     private Integer employeeBranchId;
 
