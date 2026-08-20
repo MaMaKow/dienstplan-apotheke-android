@@ -15,13 +15,13 @@ public class Branch {
     @SerializedName("branch_id")
     private final int branchId;
 
-    @SerializedName("PEP")
+    @SerializedName("branchPepId")
     private final int branchPepId;
 
     @SerializedName("name")
     private final String branchName;
 
-    @SerializedName("short_name")
+    @SerializedName("shortName")
     private final String branchShortName;
 
     @SerializedName("address")
@@ -31,7 +31,7 @@ public class Branch {
     private final String branchManager;
 
     @TypeConverters(Converters.class)
-    @SerializedName("Opening_times")
+    @SerializedName("openingTimes")
     private final HashMap<Integer, OpeningHours> openingTimesMap;
 
     public Branch(int branchId,

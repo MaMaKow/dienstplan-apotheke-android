@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.format.DateTimeFormatter;
@@ -21,9 +22,10 @@ public class OvertimeAdapter extends RecyclerView.Adapter<OvertimeAdapter.Overti
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private List<Overtime> overtimes = new ArrayList<>();
 
-    public void setOvertimes(List<Overtime> overtimes) {
-        this.overtimes = overtimes;
-        notifyDataSetChanged();
+    public void setOvertimes(List<Overtime> newOvertimes) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new OvertimeDiffCallback(this.overtimes, newOvertimes));
+        this.overtimes = new ArrayList<>(newOvertimes);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @NonNull
@@ -59,6 +61,36 @@ public class OvertimeAdapter extends RecyclerView.Adapter<OvertimeAdapter.Overti
     @Override
     public int getItemCount() {
         return overtimes.size();
+    }
+
+    private static class OvertimeDiffCallback extends DiffUtil.Callback {
+        private final List<Overtime> oldList;
+        private final List<Overtime> newList;
+
+        OvertimeDiffCallback(List<Overtime> oldList, List<Overtime> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).getId() == newList.get(newItemPosition).getId();
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
+        }
     }
 
     static class OvertimeViewHolder extends RecyclerView.ViewHolder {

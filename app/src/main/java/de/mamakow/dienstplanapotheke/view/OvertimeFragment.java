@@ -75,7 +75,7 @@ public class OvertimeFragment extends Fragment {
         setupEmployeeSpinner();
         setupObservers();
 
-        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.refreshData(true));
     }
 
     private void setupDateNavigation() {
@@ -96,7 +96,7 @@ public class OvertimeFragment extends Fragment {
         buttonDatePicker.setOnClickListener(v -> {
             LocalDate current = viewModel.getSelectedDate().getValue();
             if (current == null) current = LocalDate.now();
-            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+            new DatePickerDialog(requireContext(), (datePicker, year, month, dayOfMonth) -> {
                 LocalDate picked = LocalDate.of(year, month + 1, dayOfMonth);
                 viewModel.setSelectedDate(picked);
             }, current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
@@ -106,29 +106,33 @@ public class OvertimeFragment extends Fragment {
     private void setupEmployeeSpinner() {
         employeeSpinner.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < availableEmployees.size()) {
-                Employee selected = availableEmployees.get(position);
-                Employee current = viewModel.getSelectedEmployee().getValue();
-                if (current == null || current.getEmployeeKey() != selected.getEmployeeKey()) {
-                    viewModel.setSelectedEmployee(selected);
-                }
+                viewModel.setSelectedEmployee(availableEmployees.get(position));
             }
         });
     }
 
     private void setupObservers() {
+        // Reaktive Beobachtung der Überstunden vom ViewModel
+        viewModel.getOvertimes().observe(getViewLifecycleOwner(), overtimes -> {
+            if (overtimes != null) {
+                overtimeAdapter.setOvertimes(overtimes);
+                emptyStateView.setVisibility(overtimes.isEmpty() ? View.VISIBLE : View.GONE);
+            } else {
+                emptyStateView.setVisibility(View.VISIBLE);
+            }
+        });
+
         viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
             if (date != null) {
                 buttonDatePicker.setText(String.valueOf(date.getYear()));
-                observeOvertimes();
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
         viewModel.getSelectedEmployee().observe(getViewLifecycleOwner(), employee -> {
             if (employee != null) {
                 updateSpinnerSelection(employee);
-                observeOvertimes();
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
@@ -150,26 +154,7 @@ public class OvertimeFragment extends Fragment {
             if (!isLoading) {
                 swipeRefreshLayout.setRefreshing(false);
             }
-            if (isLoading) {
-                emptyStateView.setVisibility(View.GONE);
-            }
         });
-    }
-
-    private void observeOvertimes() {
-        Employee employee = viewModel.getSelectedEmployee().getValue();
-        LocalDate date = viewModel.getSelectedDate().getValue();
-        if (employee != null && date != null) {
-            viewModel.getOvertimesForEmployeeAndYear(employee.getEmployeeKey(), date.getYear()).removeObservers(getViewLifecycleOwner());
-            viewModel.getOvertimesForEmployeeAndYear(employee.getEmployeeKey(), date.getYear()).observe(getViewLifecycleOwner(), overtimes -> {
-                if (overtimes != null) {
-                    overtimeAdapter.setOvertimes(overtimes);
-                    emptyStateView.setVisibility(overtimes.isEmpty() ? View.VISIBLE : View.GONE);
-                } else {
-                    emptyStateView.setVisibility(View.VISIBLE);
-                }
-            });
-        }
     }
 
     private void updateSpinnerAdapter(List<String> names) {
@@ -179,20 +164,11 @@ public class OvertimeFragment extends Fragment {
     }
 
     private void updateSpinnerSelection(Employee employee) {
-        for (int i = 0; i < availableEmployees.size(); i++) {
-            if (availableEmployees.get(i).getEmployeeKey() == employee.getEmployeeKey()) {
-                employeeSpinner.setText(availableEmployees.get(i).getEmployeeFullName(), false);
+        for (Employee e : availableEmployees) {
+            if (e.getEmployeeKey() == employee.getEmployeeKey()) {
+                employeeSpinner.setText(e.getEmployeeFullName(), false);
                 break;
             }
-        }
-    }
-
-    private void refreshData() {
-        Employee employee = viewModel.getSelectedEmployee().getValue();
-        if (employee != null) {
-            viewModel.fetchOvertimes(employee.getEmployeeKey());
-        } else {
-            swipeRefreshLayout.setRefreshing(false);
         }
     }
 }

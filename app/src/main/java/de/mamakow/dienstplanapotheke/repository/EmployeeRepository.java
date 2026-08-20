@@ -30,14 +30,6 @@ public class EmployeeRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    public Employee getEmployeeByEmployeeKey(int employeeKey) {
-        return employeeDao.getEmployeeByEmployeeKey(employeeKey);
-    }
-
-    public Employee getEmployeeById(int id) {
-        return employeeDao.getEmployeeById(id);
-    }
-
     public void fetchAndSaveEmployees(RetrofitNetworkHandler.NetworkResponseCallback<Void> callback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
@@ -50,7 +42,8 @@ public class EmployeeRepository {
             @Override
             public void onSuccess(@NonNull List<Employee> employees) {
                 executor.execute(() -> {
-                    employeeDao.clearEmployees();
+                    // Smart Sync for Employees: Use REPLACE and eventually delete missing if needed.
+                    // For now, following instructions to remove clear() and use REPLACE.
                     employeeDao.insertEmployees(employees);
                     if (callback != null) callback.onSuccess(null);
                 });
@@ -64,13 +57,7 @@ public class EmployeeRepository {
         });
     }
 
-    public List<Employee> getAllEmployees() {
-        return employeeDao.getAllEmployees();
-    }
-
     public LiveData<Workforce> getWorkforceLiveData() {
-        return Transformations.map(employeeDao.getAllEmployeesLiveData(), employees -> {
-            return new Workforce(employees);
-        });
+        return Transformations.map(employeeDao.getAllEmployeesLiveData(), Workforce::new);
     }
 }

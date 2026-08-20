@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.model.Branch;
@@ -37,7 +36,7 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
 
     public void setRosterDays(List<RosterDay> newRosterDays) {
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new RosterDiffCallback(this.rosterDays, newRosterDays));
-        this.rosterDays = new ArrayList<>(newRosterDays);
+        this.rosterDays = new ArrayList<>(newRosterDays != null ? newRosterDays : new ArrayList<>());
         diffResult.dispatchUpdatesTo(this);
     }
 
@@ -87,17 +86,17 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
 
         RosterDiffCallback(List<RosterDay> oldList, List<RosterDay> newList) {
             this.oldList = oldList;
-            this.newList = newList;
+            this.newList = newList != null ? newList : new ArrayList<>();
         }
 
         @Override
         public int getOldListSize() {
-            return oldList != null ? oldList.size() : 0;
+            return oldList.size();
         }
 
         @Override
         public int getNewListSize() {
-            return newList != null ? newList.size() : 0;
+            return newList.size();
         }
 
         @Override
@@ -107,32 +106,7 @@ public class RosterAdapter extends RecyclerView.Adapter<RosterAdapter.RosterView
 
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            RosterDay oldDay = oldList.get(oldItemPosition);
-            RosterDay newDay = newList.get(newItemPosition);
-
-            List<RosterItem> oldItems = oldDay.getRosterItems();
-            List<RosterItem> newItems = newDay.getRosterItems();
-
-            if (oldItems.size() != newItems.size()) return false;
-
-            for (int i = 0; i < oldItems.size(); i++) {
-                RosterItem oldItem = oldItems.get(i);
-                RosterItem newItem = newItems.get(i);
-
-                if (oldItem.getBranchId() != newItem.getBranchId()) return false;
-                if (!Objects.equals(oldItem.getDutyStartDateTime(), newItem.getDutyStartDateTime()))
-                    return false;
-                if (!Objects.equals(oldItem.getDutyEndDateTime(), newItem.getDutyEndDateTime()))
-                    return false;
-                if (oldItem.getEmployeeKey() != newItem.getEmployeeKey()) return false;
-                if (!Objects.equals(oldItem.getComment(), newItem.getComment())) return false;
-                if (!Objects.equals(oldItem.getBreakStartDateTime(), newItem.getBreakStartDateTime()))
-                    return false;
-                if (!Objects.equals(oldItem.getBreakEndDateTime(), newItem.getBreakEndDateTime()))
-                    return false;
-            }
-
-            return true;
+            return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
         }
     }
 

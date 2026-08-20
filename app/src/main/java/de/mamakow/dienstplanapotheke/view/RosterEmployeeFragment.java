@@ -73,7 +73,7 @@ public class RosterEmployeeFragment extends Fragment {
         setupEmployeeSpinner();
         setupObservers();
 
-        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.refreshData(true));
     }
 
     private void setupDateNavigation() {
@@ -94,7 +94,7 @@ public class RosterEmployeeFragment extends Fragment {
         buttonDatePicker.setOnClickListener(v -> {
             LocalDate current = viewModel.getSelectedDate().getValue();
             if (current == null) current = LocalDate.now();
-            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+            new DatePickerDialog(requireContext(), (datePicker, year, month, dayOfMonth) -> {
                 LocalDate picked = LocalDate.of(year, month + 1, dayOfMonth)
                         .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
                 viewModel.setSelectedDate(picked);
@@ -105,11 +105,7 @@ public class RosterEmployeeFragment extends Fragment {
     private void setupEmployeeSpinner() {
         employeeSpinner.setOnItemClickListener((parent, v, position, id) -> {
             if (position >= 0 && position < availableEmployees.size()) {
-                Employee selected = availableEmployees.get(position);
-                Employee current = viewModel.getSelectedEmployee().getValue();
-                if (current == null || current.getEmployeeKey() != selected.getEmployeeKey()) {
-                    viewModel.setSelectedEmployee(selected);
-                }
+                viewModel.setSelectedEmployee(availableEmployees.get(position));
             }
         });
     }
@@ -118,14 +114,14 @@ public class RosterEmployeeFragment extends Fragment {
         viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
             if (date != null) {
                 buttonDatePicker.setText(getString(R.string.woche_vom, date.format(dateFormatter)));
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
         viewModel.getSelectedEmployee().observe(getViewLifecycleOwner(), employee -> {
             if (employee != null) {
                 updateSpinnerSelection(employee);
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
@@ -135,66 +131,40 @@ public class RosterEmployeeFragment extends Fragment {
                 rosterAdapter.setEmployees(availableEmployees);
                 updateSpinnerAdapter(workforce.getEmployeeNames());
                 Employee current = viewModel.getSelectedEmployee().getValue();
-                if (current != null) {
-                    updateSpinnerSelection(current);
-                }
+                if (current != null) updateSpinnerSelection(current);
             }
         });
 
-        viewModel.getRoster().observe(getViewLifecycleOwner(), roster -> {
+        viewModel.getEmployeeRoster().observe(getViewLifecycleOwner(), roster -> {
             if (roster != null) {
                 rosterAdapter.setRosterDays(roster.getRosterDays());
-                if (roster.getRosterDays().isEmpty()) {
-                    emptyStateView.setVisibility(View.VISIBLE);
-                } else {
-                    emptyStateView.setVisibility(View.GONE);
-                }
+                emptyStateView.setVisibility(roster.getRosterDays().isEmpty() ? View.VISIBLE : View.GONE);
             }
         });
 
         viewModel.getBranches().observe(getViewLifecycleOwner(), branches -> {
-            if (branches != null) {
-                rosterAdapter.setBranches(branches);
-            }
+            if (branches != null) rosterAdapter.setBranches(branches);
         });
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (!swipeRefreshLayout.isRefreshing()) {
                 progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
             }
-            if (!isLoading) {
-                swipeRefreshLayout.setRefreshing(false);
-            }
+            if (!isLoading) swipeRefreshLayout.setRefreshing(false);
         });
     }
 
     private void updateSpinnerAdapter(List<String> names) {
-        // Nutze R.layout.simple_list_item_1 oder ein Material Layout für bessere Abstände
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_list_item_1, names);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, names);
         employeeSpinner.setAdapter(adapter);
     }
 
-
     private void updateSpinnerSelection(Employee employee) {
-        for (int i = 0; i < availableEmployees.size(); i++) {
-            if (availableEmployees.get(i).getEmployeeKey() == employee.getEmployeeKey()) {
-                // Setze den Text. Der zweite Parameter 'false' ist wichtig,
-                // damit das Dropdown-Menü dabei nicht aufklappt (Filterung deaktivieren).
-                employeeSpinner.setText(availableEmployees.get(i).getEmployeeFullName(), false);
+        for (Employee e : availableEmployees) {
+            if (e.getEmployeeKey() == employee.getEmployeeKey()) {
+                employeeSpinner.setText(e.getEmployeeFullName(), false);
                 break;
             }
-        }
-    }
-
-    private void refreshData() {
-        LocalDate startDate = viewModel.getSelectedDate().getValue();
-        Employee employee = viewModel.getSelectedEmployee().getValue();
-        if (startDate != null && employee != null) {
-            LocalDate endDate = startDate.plusDays(6);
-            viewModel.refreshData(startDate, endDate, employee.getEmployeeKey(), null);
-        } else {
-            swipeRefreshLayout.setRefreshing(false);
         }
     }
 }

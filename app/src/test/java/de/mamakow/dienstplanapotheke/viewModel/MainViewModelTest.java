@@ -3,6 +3,7 @@ package de.mamakow.dienstplanapotheke.viewModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -29,8 +30,8 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Field;
-import java.time.LocalDate;
 
+import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 import de.mamakow.dienstplanapotheke.repository.AbsenceRepository;
 import de.mamakow.dienstplanapotheke.repository.BranchRepository;
@@ -98,18 +99,22 @@ public class MainViewModelTest {
     public void refreshData_Error_PostsUIErrorEvent() {
         // Arrange
         String errorMsg = "Verbindungsfehler";
+        Employee employee = new Employee();
+        employee.setEmployeeKey(1);
+        viewModel.setSelectedEmployee(employee);
 
         // Mock rosterRepository.fetchAndSaveRosterData to trigger onError
+        // Signature: String, String, Integer, Integer, boolean, Callback (6 arguments)
         doAnswer(invocation -> {
-            RetrofitNetworkHandler.NetworkResponseCallback<Void> callback = invocation.getArgument(4);
+            RetrofitNetworkHandler.NetworkResponseCallback<Void> callback = invocation.getArgument(5);
             callback.onError(errorMsg);
             return null;
-        }).when(rosterRepository).fetchAndSaveRosterData(anyString(), anyString(), anyInt(), anyInt(), any());
+        }).when(rosterRepository).fetchAndSaveRosterData(anyString(), anyString(), any(), any(), anyBoolean(), any());
 
         viewModel.getUiError().observeForever(uiErrorObserver);
 
         // Act
-        viewModel.refreshData(LocalDate.now(), LocalDate.now().plusDays(7), 1, 1);
+        viewModel.refreshData(true);
 
         // Assert
         verify(uiErrorObserver).onChanged(uiErrorCaptor.capture());
@@ -125,17 +130,22 @@ public class MainViewModelTest {
     @Test
     public void refreshData_Success_SetsIsLoadingFalse() {
         // Arrange
+        Employee employee = new Employee();
+        employee.setEmployeeKey(1);
+        viewModel.setSelectedEmployee(employee);
+
+        // Signature: String, String, Integer, Integer, boolean, Callback (6 arguments)
         doAnswer(invocation -> {
-            RetrofitNetworkHandler.NetworkResponseCallback<Void> callback = invocation.getArgument(4);
+            RetrofitNetworkHandler.NetworkResponseCallback<Void> callback = invocation.getArgument(5);
             //noinspection ConstantConditions
             callback.onSuccess(null);
             return null;
-        }).when(rosterRepository).fetchAndSaveRosterData(anyString(), anyString(), anyInt(), anyInt(), any());
+        }).when(rosterRepository).fetchAndSaveRosterData(anyString(), anyString(), any(), any(), anyBoolean(), any());
 
         viewModel.getIsLoading().observeForever(loadingObserver);
 
         // Act
-        viewModel.refreshData(LocalDate.now(), LocalDate.now().plusDays(7), 1, 1);
+        viewModel.refreshData(true);
 
         // Assert
         // isLoading is initialized to false, then setValue(true), then postValue(false)
@@ -149,11 +159,12 @@ public class MainViewModelTest {
     public void fetchOvertimes_Error_PostsToastError() {
         // Arrange
         String errorMsg = "Fehler beim Laden der Überstunden";
+        // Signature: int employeeKey, int year, boolean force, Callback (4 arguments)
         doAnswer(invocation -> {
-            RetrofitNetworkHandler.NetworkResponseCallback<Void> callback = invocation.getArgument(1);
+            RetrofitNetworkHandler.NetworkResponseCallback<Void> callback = invocation.getArgument(3);
             callback.onError(errorMsg);
             return null;
-        }).when(overtimeRepository).fetchAndSaveEmployeeOvertimes(anyInt(), any());
+        }).when(overtimeRepository).fetchAndSaveEmployeeOvertimes(anyInt(), anyInt(), anyBoolean(), any());
 
         viewModel.getUiError().observeForever(uiErrorObserver);
 

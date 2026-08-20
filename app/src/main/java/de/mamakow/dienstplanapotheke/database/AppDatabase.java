@@ -14,7 +14,7 @@ import de.mamakow.dienstplanapotheke.model.Employee;
 import de.mamakow.dienstplanapotheke.model.Overtime;
 import de.mamakow.dienstplanapotheke.model.RosterItem;
 
-@Database(entities = {RosterItem.class, Employee.class, Branch.class, Absence.class, Overtime.class}, version = 8, exportSchema = false)
+@Database(entities = {RosterItem.class, Employee.class, Branch.class, Absence.class, Overtime.class}, version = 13, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -39,12 +39,8 @@ public abstract class AppDatabase extends RoomDatabase {
     }
 
     public abstract RosterItemDao rosterDao();
-
     public abstract EmployeeDao employeeDao();
-
     public abstract BranchDao branchDao();
-
     public abstract AbsenceDao absenceDao();
-
     public abstract OvertimeDao overtimeDao();
 }

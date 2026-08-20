@@ -1,7 +1,6 @@
 package de.mamakow.dienstplanapotheke.view;
 
 import android.content.res.Configuration;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import de.mamakow.dienstplanapotheke.R;
 import de.mamakow.dienstplanapotheke.model.Employee;
@@ -38,12 +39,13 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
     public BranchRosterAdapter() {
     }
 
-    public void setRosterDays(List<RosterDay> rosterDays) {
-        this.rosterDays = rosterDays != null ? rosterDays : new ArrayList<>();
-        Log.d(TAG, "setRosterDays: " + this.rosterDays.size() + " days received");
-        notifyDataSetChanged();
+    public void setRosterDays(List<RosterDay> newRosterDays) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new RosterDiffCallback(this.rosterDays, newRosterDays));
+        this.rosterDays = new ArrayList<>(newRosterDays != null ? newRosterDays : new ArrayList<>());
+        diffResult.dispatchUpdatesTo(this);
     }
 
+    @SuppressWarnings("NotifyDataSetChanged")
     public void setEmployees(Workforce workforce) {
         employeeMap.clear();
         if (workforce != null && workforce.getEmployees() != null) {
@@ -51,7 +53,6 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
                 employeeMap.put(e.getEmployeeKey(), e);
             }
         }
-        Log.d(TAG, "setEmployees: " + employeeMap.size() + " employees loaded into map");
         notifyDataSetChanged();
     }
 
@@ -71,6 +72,38 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
     @Override
     public int getItemCount() {
         return rosterDays.size();
+    }
+
+    private static class RosterDiffCallback extends DiffUtil.Callback {
+        private final List<RosterDay> oldList;
+        private final List<RosterDay> newList;
+
+        RosterDiffCallback(List<RosterDay> oldList, List<RosterDay> newList) {
+            this.oldList = oldList;
+            this.newList = newList != null ? newList : new ArrayList<>();
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).getLocalDate().equals(newList.get(newItemPosition).getLocalDate());
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            RosterDay oldDay = oldList.get(oldItemPosition);
+            RosterDay newDay = newList.get(newItemPosition);
+            return Objects.equals(oldDay.getRosterItems(), newDay.getRosterItems());
+        }
     }
 
     class RosterViewHolder extends RecyclerView.ViewHolder {
@@ -93,7 +126,6 @@ public class BranchRosterAdapter extends RecyclerView.Adapter<BranchRosterAdapte
                     & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
 
             List<RosterItem> items = rosterDay.getRosterItems();
-            Log.d(TAG, "bind: Day " + rosterDay.getLocalDate() + " has " + items.size() + " items. Map size: " + employeeMap.size());
 
             for (RosterItem item : items) {
                 View subItemView = LayoutInflater.from(itemView.getContext()).inflate(R.layout.item_roster_shift_branch, layoutRosterItems, false);

@@ -72,7 +72,7 @@ public class RosterBranchFragment extends Fragment {
         setupBranchSpinner();
         setupObservers();
 
-        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.refreshData(true));
     }
 
     private void setupDateNavigation() {
@@ -93,7 +93,7 @@ public class RosterBranchFragment extends Fragment {
         buttonDatePicker.setOnClickListener(v -> {
             LocalDate current = viewModel.getSelectedDate().getValue();
             if (current == null) current = LocalDate.now();
-            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+            new DatePickerDialog(requireContext(), (datePicker, year, month, dayOfMonth) -> {
                 LocalDate picked = LocalDate.of(year, month + 1, dayOfMonth);
                 viewModel.setSelectedDate(picked);
             }, current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
@@ -103,12 +103,7 @@ public class RosterBranchFragment extends Fragment {
     private void setupBranchSpinner() {
         branchSpinner.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < availableBranches.size()) {
-                Branch selectedBranch = availableBranches.get(position);
-                Branch currentBranch = viewModel.getSelectedBranch().getValue();
-
-                if (currentBranch == null || currentBranch.getBranchId() != selectedBranch.getBranchId()) {
-                    viewModel.setSelectedBranch(selectedBranch);
-                }
+                viewModel.setSelectedBranch(availableBranches.get(position));
             }
         });
     }
@@ -117,14 +112,14 @@ public class RosterBranchFragment extends Fragment {
         viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
             if (date != null) {
                 buttonDatePicker.setText(date.format(dateFormatter));
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
         viewModel.getSelectedBranch().observe(getViewLifecycleOwner(), branch -> {
             if (branch != null) {
                 updateSpinnerSelection(branch);
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
@@ -135,7 +130,6 @@ public class RosterBranchFragment extends Fragment {
 
                 Branch current = viewModel.getSelectedBranch().getValue();
                 if (current == null) {
-                    // Pre-select first branch if none is selected
                     viewModel.setSelectedBranch(branches.get(0));
                 } else {
                     updateSpinnerSelection(current);
@@ -149,11 +143,10 @@ public class RosterBranchFragment extends Fragment {
             }
         });
 
-        viewModel.getRoster().observe(getViewLifecycleOwner(), roster -> {
+        viewModel.getBranchRoster().observe(getViewLifecycleOwner(), roster -> {
             if (roster != null) {
                 branchRosterAdapter.setRosterDays(roster.getRosterDays());
-                boolean isEmpty = roster.getRosterDays().isEmpty();
-                emptyStateView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+                emptyStateView.setVisibility(roster.getRosterDays().isEmpty() ? View.VISIBLE : View.GONE);
             } else {
                 emptyStateView.setVisibility(View.VISIBLE);
             }
@@ -166,9 +159,6 @@ public class RosterBranchFragment extends Fragment {
             if (!isLoading) {
                 swipeRefreshLayout.setRefreshing(false);
             }
-            if (isLoading) {
-                emptyStateView.setVisibility(View.GONE);
-            }
         });
     }
 
@@ -180,15 +170,5 @@ public class RosterBranchFragment extends Fragment {
 
     private void updateSpinnerSelection(Branch branch) {
         branchSpinner.setText(branch.getBranchName(), false);
-    }
-
-    private void refreshData() {
-        LocalDate date = viewModel.getSelectedDate().getValue();
-        Branch branch = viewModel.getSelectedBranch().getValue();
-        if (date != null && branch != null) {
-            viewModel.refreshData(date, date, null, branch.getBranchId());
-        } else {
-            swipeRefreshLayout.setRefreshing(false);
-        }
     }
 }

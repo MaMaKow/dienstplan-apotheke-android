@@ -35,21 +35,22 @@ public class RosterItemDto {
 
     public static Map<String, List<RosterItemDto>> mapToApiFormat(List<RosterItem> items) {
         Map<String, List<RosterItemDto>> map = new HashMap<>();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         for (RosterItem item : items) {
             RosterItemDto dto = new RosterItemDto();
             dto.dateSql = item.getLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
             dto.employeeKey = item.getEmployeeKey();
             dto.branchId = item.getBranchId();
-            // Hier die Zeiten formatieren (HH:mm), wie PHP es erwartet
-            dto.dutyStartSql = item.getDutyStartDateTime() != null ? item.getDutyStartDateTime().format(DateTimeFormatter.ofPattern("HH:mm")) : null;
-            dto.dutyEndSql = item.getDutyEndDateTime() != null ? item.getDutyEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm")) : null;
-            dto.breakStartSql = item.getBreakStartDateTime() != null ? item.getBreakStartDateTime().format(DateTimeFormatter.ofPattern("HH:mm")) : null;
-            dto.breakEndSql = item.getBreakEndDateTime() != null ? item.getBreakEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm")) : null;
+
+            // Format times as HH:mm as expected by the PHP backend
+            dto.dutyStartSql = item.getDutyStartDateTime() != null ? item.getDutyStartDateTime().format(timeFormatter) : null;
+            dto.dutyEndSql = item.getDutyEndDateTime() != null ? item.getDutyEndDateTime().format(timeFormatter) : null;
+            dto.breakStartSql = item.getBreakStartDateTime() != null ? item.getBreakStartDateTime().format(timeFormatter) : null;
+            dto.breakEndSql = item.getBreakEndDateTime() != null ? item.getBreakEndDateTime().format(timeFormatter) : null;
             dto.comment = item.getComment();
 
-            // PHP erwartet den Unix-Timestamp als String-Key für den Tag
-            // Beispiel für LocalDate zu Unix (Mitternacht UTC/Lokal)
+            // PHP expects the Unix timestamp as a String key for the day
             long unixTimestamp = item.getLocalDate().atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
             String key = String.valueOf(unixTimestamp);
 

@@ -1,39 +1,39 @@
 package de.mamakow.dienstplanapotheke.model;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
-@Entity(tableName = "absence_table")
+@Entity(tableName = "absence_table", primaryKeys = {"employee_key", "start_date"})
 public class Absence {
 
-    @PrimaryKey(autoGenerate = true)
-    private int dbId;
-
-    @SerializedName("id")
+    @SerializedName(value = "id", alternate = {"primary_key", "pk"})
     @ColumnInfo(name = "id")
     private int id;
 
-    @SerializedName("employeeKey")
+    @SerializedName(value = "employeeKey", alternate = {"employee_key", "employee_id", "employeeId"})
     @ColumnInfo(name = "employee_key")
     private int employeeKey;
 
-    @SerializedName("start")
+    @NonNull
+    @SerializedName(value = "start", alternate = {"start_date", "startDate"})
     @ColumnInfo(name = "start_date")
     private LocalDate startDate;
 
-    @SerializedName("end")
+    @SerializedName(value = "end", alternate = {"end_date", "endDate"})
     @ColumnInfo(name = "end_date")
     private LocalDate endDate;
 
-    @SerializedName("reasonId")
+    @SerializedName(value = "reasonId", alternate = {"reason_id", "absence_type", "type"})
     @ColumnInfo(name = "absence_type")
     private int absenceType;
-    @SerializedName("reasonString")
+
+    @SerializedName(value = "reasonString", alternate = {"reason_string", "absence_type_string"})
     @ColumnInfo(name = "absence_type_string")
     private String absenceTypeString;
 
@@ -42,14 +42,6 @@ public class Absence {
     private String comment;
 
     public Absence() {
-    }
-
-    public int getDbId() {
-        return dbId;
-    }
-
-    public void setDbId(int dbId) {
-        this.dbId = dbId;
     }
 
     public int getId() {
@@ -68,11 +60,12 @@ public class Absence {
         this.employeeKey = employeeKey;
     }
 
+    @NonNull
     public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(LocalDate startDate) {
+    public void setStartDate(@NonNull LocalDate startDate) {
         this.startDate = startDate;
     }
 
@@ -106,5 +99,19 @@ public class Absence {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Absence absence = (Absence) o;
+        return employeeKey == absence.employeeKey &&
+                Objects.equals(startDate, absence.startDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(employeeKey, startDate);
     }
 }

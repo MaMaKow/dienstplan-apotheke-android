@@ -2,7 +2,6 @@ package de.mamakow.dienstplanapotheke.view;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,7 +62,6 @@ public class AbsenceFragment extends Fragment {
         emptyStateView = view.findViewById(R.id.emptyStateView);
         emptyStateTextView = view.findViewById(R.id.emptyStateTextView);
 
-        // Customize empty state for Absences
         emptyStateTextView.setText(R.string.keine_abwesenheiten_gefunden);
 
         absenceAdapter = new AbsenceAdapter();
@@ -76,7 +74,8 @@ public class AbsenceFragment extends Fragment {
         setupEmployeeSpinner();
         setupObservers();
 
-        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+        // Swipe-to-Refresh erzwingt einen API-Abgleich (Force Refresh)
+        swipeRefreshLayout.setOnRefreshListener(() -> viewModel.refreshData(true));
     }
 
     private void setupDateNavigation() {
@@ -97,7 +96,7 @@ public class AbsenceFragment extends Fragment {
         buttonDatePicker.setOnClickListener(v -> {
             LocalDate current = viewModel.getSelectedDate().getValue();
             if (current == null) current = LocalDate.now();
-            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+            new DatePickerDialog(requireContext(), (datePicker, year, month, dayOfMonth) -> {
                 LocalDate picked = LocalDate.of(year, month + 1, dayOfMonth);
                 viewModel.setSelectedDate(picked);
             }, current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
@@ -107,17 +106,13 @@ public class AbsenceFragment extends Fragment {
     private void setupEmployeeSpinner() {
         employeeSpinner.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < availableEmployees.size()) {
-                Employee selectedEmployee = availableEmployees.get(position);
-                Employee currentEmployee = viewModel.getSelectedEmployee().getValue();
-                if (currentEmployee == null || currentEmployee.getEmployeeKey() != selectedEmployee.getEmployeeKey()) {
-                    viewModel.setSelectedEmployee(selectedEmployee);
-                }
+                viewModel.setSelectedEmployee(availableEmployees.get(position));
             }
         });
     }
 
     private void setupObservers() {
-        // Permanent observer for absences - only one instance, clean reactive stream
+        // Reaktive Beobachtung der Abwesenheiten vom ViewModel
         viewModel.getAbsences().observe(getViewLifecycleOwner(), absences -> {
             if (absences != null) {
                 absenceAdapter.setAbsences(absences);
@@ -130,14 +125,14 @@ public class AbsenceFragment extends Fragment {
         viewModel.getSelectedDate().observe(getViewLifecycleOwner(), date -> {
             if (date != null) {
                 buttonDatePicker.setText(String.valueOf(date.getYear()));
-                refreshData();
+                viewModel.refreshData(false); // Automatischer Sync nur bei abgelaufenem Intervall
             }
         });
 
         viewModel.getSelectedEmployee().observe(getViewLifecycleOwner(), employee -> {
             if (employee != null) {
                 updateSpinnerSelection(employee);
-                refreshData();
+                viewModel.refreshData(false);
             }
         });
 
@@ -159,9 +154,6 @@ public class AbsenceFragment extends Fragment {
             if (!isLoading) {
                 swipeRefreshLayout.setRefreshing(false);
             }
-            if (isLoading) {
-                emptyStateView.setVisibility(View.GONE);
-            }
         });
     }
 
@@ -172,26 +164,11 @@ public class AbsenceFragment extends Fragment {
     }
 
     private void updateSpinnerSelection(Employee employee) {
-        for (int i = 0; i < availableEmployees.size(); i++) {
-            if (availableEmployees.get(i).getEmployeeKey() == employee.getEmployeeKey()) {
-                employeeSpinner.setText(availableEmployees.get(i).getEmployeeFullName(), false);
+        for (Employee e : availableEmployees) {
+            if (e.getEmployeeKey() == employee.getEmployeeKey()) {
+                employeeSpinner.setText(e.getEmployeeFullName(), false);
                 break;
             }
-        }
-    }
-
-    private void refreshData() {
-        Employee employee = viewModel.getSelectedEmployee().getValue();
-        LocalDate selectedDate = viewModel.getSelectedDate().getValue();
-        if (employee != null && selectedDate != null) {
-            LocalDate startOfYear = selectedDate.withDayOfYear(1);
-            LocalDate endOfYear = selectedDate.withDayOfYear(selectedDate.lengthOfYear());
-            Log.d("AbsenceFragment", "refreshData for year: " + selectedDate.getYear());
-
-            // Trigger background sync
-            viewModel.refreshData(startOfYear, endOfYear, employee.getEmployeeKey(), null);
-        } else {
-            swipeRefreshLayout.setRefreshing(false);
         }
     }
 }

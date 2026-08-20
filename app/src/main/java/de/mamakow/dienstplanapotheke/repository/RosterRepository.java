@@ -6,10 +6,12 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -21,11 +23,14 @@ import de.mamakow.dienstplanapotheke.network.RetrofitNetworkHandler;
 import de.mamakow.dienstplanapotheke.session.SessionManager;
 
 public class RosterRepository {
-    private static final String TAG = "RosterRepository";
+    private static final String TAG = "SYNC_DEBUG_ROSTER_REP";
+    private static final long SYNC_INTERVAL_SECONDS = 600; // 10 minutes
     private final RetrofitNetworkHandler retrofitNetworkHandler;
     private final RosterItemDao rosterItemDao;
     private final SessionManager sessionManager;
     private final Executor executor;
+    // Cache for last sync timestamps: key = (employee_ID or branch_ID) + "_" + dateStart + "_" + dateEnd
+    private final Map<String, Long> lastSyncMap = new ConcurrentHashMap<>();
 
     public RosterRepository(RetrofitNetworkHandler retrofitNetworkHandler, RosterItemDao rosterItemDao, SessionManager sessionManager) {
         this.retrofitNetworkHandler = retrofitNetworkHandler;
@@ -34,37 +39,17 @@ public class RosterRepository {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    public LiveData<Roster> getAllRosterData() {
+    public LiveData<Roster> getRosterData(LocalDate startDate, LocalDate endDate, Integer employeeKey, Integer branchId) {
         MediatorLiveData<Roster> result = new MediatorLiveData<>();
-        LiveData<List<RosterItem>> source = rosterItemDao.getAllRosterItems();
+        LiveData<List<RosterItem>> source;
 
-        result.addSource(source, rosterItems -> {
-            executor.execute(() -> {
-                Roster roster = new Roster();
-                if (rosterItems != null && !rosterItems.isEmpty()) {
-                    Map<LocalDate, RosterDay> rosterDayMap = new LinkedHashMap<>();
-                    for (RosterItem item : rosterItems) {
-                        LocalDate date = item.getLocalDate();
-                        RosterDay rosterDay = rosterDayMap.get(date);
-                        if (rosterDay == null) {
-                            rosterDay = new RosterDay(date);
-                            rosterDayMap.put(date, rosterDay);
-                        }
-                        rosterDay.addRosterItem(item);
-                    }
-                    for (RosterDay rosterDay : rosterDayMap.values()) {
-                        roster.addRosterDay(rosterDay);
-                    }
-                }
-                result.postValue(roster);
-            });
-        });
-        return result;
-    }
-
-    public LiveData<Roster> getRosterData(LocalDate startDate, LocalDate endDate) {
-        MediatorLiveData<Roster> result = new MediatorLiveData<>();
-        LiveData<List<RosterItem>> source = rosterItemDao.getRosterItemsForDateRange(startDate, endDate);
+        if (employeeKey != null) {
+            source = rosterItemDao.getRosterItemsForEmployeeAndDateRange(employeeKey, startDate, endDate);
+        } else if (branchId != null) {
+            source = rosterItemDao.getRosterItemsForBranchAndDateRange(branchId, startDate, endDate);
+        } else {
+            source = rosterItemDao.getRosterItemsForDateRange(startDate, endDate);
+        }
 
         result.addSource(source, rosterItems -> {
             executor.execute(() -> {
@@ -91,43 +76,54 @@ public class RosterRepository {
         return result;
     }
 
-    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey, Integer branchId) {
-        fetchAndSaveRosterData(dateStart, dateEnd, employeeKey, branchId, null);
-    }
+    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey, Integer branchId, boolean force, RetrofitNetworkHandler.NetworkResponseCallback<Void> finalCallback) {
+        String cacheKey = (employeeKey != null ? "emp_" + employeeKey : "br_" + branchId) + "_" + dateStart + "_" + dateEnd;
+        if (!force && !shouldSync(cacheKey)) {
+            if (finalCallback != null) finalCallback.onSuccess(null);
+            return;
+        }
 
-    public void fetchAndSaveRosterData(String dateStart, String dateEnd, Integer employeeKey, Integer branchId, RetrofitNetworkHandler.NetworkResponseCallback<Void> finalCallback) {
         String token = sessionManager.getSessionToken();
         if (token == null) {
-            Log.e(TAG, "Token is null. Triggering login...");
             sessionManager.performLogin();
             if (finalCallback != null) finalCallback.onError("Token is null");
             return;
         }
+
+        Log.i(TAG, "Sync started for " + (employeeKey != null ? "Employee " + employeeKey : "Branch " + branchId)
+                + " range: " + dateStart + " to " + dateEnd + " at " + Instant.now());
+
         retrofitNetworkHandler.fetchRoster(token, dateStart, dateEnd, employeeKey, branchId, new RetrofitNetworkHandler.NetworkResponseCallback<List<RosterItem>>() {
             @Override
             public void onSuccess(@NonNull List<RosterItem> rosterItems) {
                 executor.execute(() -> {
-                    rosterItemDao.clearRosterItems();
-                    if (rosterItems != null && !rosterItems.isEmpty()) {
-                        rosterItemDao.insertRosterItems(rosterItems);
-                        Log.d(TAG, "Roster data saved to database: " + rosterItems.size() + " items.");
+                    LocalDate start = LocalDate.parse(dateStart);
+                    LocalDate end = LocalDate.parse(dateEnd);
+
+                    if (employeeKey != null) {
+                        rosterItemDao.syncRosterItemsForEmployee(employeeKey, start, end, rosterItems);
+                    } else if (branchId != null) {
+                        rosterItemDao.syncRosterItemsForBranch(branchId, start, end, rosterItems);
                     } else {
-                        Log.d(TAG, "No roster items received from server.");
+                        rosterItemDao.insertRosterItems(rosterItems);
                     }
+
+                    lastSyncMap.put(cacheKey, Instant.now().getEpochSecond());
                     if (finalCallback != null) finalCallback.onSuccess(null);
                 });
             }
 
             @Override
             public void onError(@NonNull String errorMessage) {
-                Log.e(TAG, "Error fetching roster data: " + errorMessage);
-                if (errorMessage != null && (errorMessage.contains("Token expired") || errorMessage.contains("Invalid token"))) {
-                    Log.i(TAG, "Token issue detected. Triggering re-login.");
-                    sessionManager.logout();
-                    sessionManager.performLogin();
-                }
+                Log.e(TAG, "Sync error: " + errorMessage);
                 if (finalCallback != null) finalCallback.onError(errorMessage);
             }
         });
+    }
+
+    private boolean shouldSync(String cacheKey) {
+        Long lastSync = lastSyncMap.get(cacheKey);
+        if (lastSync == null) return true;
+        return (Instant.now().getEpochSecond() - lastSync) > SYNC_INTERVAL_SECONDS;
     }
 }

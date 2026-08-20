@@ -11,11 +11,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +84,13 @@ public class RetrofitNetworkHandler {
                         return LocalDateTime.parse(val, apiDateTimeFormatter);
                     }
                     return LocalDateTime.parse(val, DateTimeFormatter.ISO_DATE_TIME);
+                })
+                .registerTypeAdapter(LocalTime.class, (JsonDeserializer<LocalTime>) (json, typeOfT, context1) -> {
+                    String val = json.getAsString();
+                    if (val == null || val.isEmpty() || val.equals("null")) return null;
+                    if (val.length() == 5)
+                        return LocalTime.parse(val, DateTimeFormatter.ofPattern("HH:mm"));
+                    return LocalTime.parse(val);
                 })
                 .create();
 
@@ -182,7 +191,20 @@ public class RetrofitNetworkHandler {
                     List<RosterItem> allItems = new ArrayList<>();
                     for (JsonElement dayElement : body.getAsJsonArray()) {
                         DayWrapper day = gson.fromJson(dayElement, DayWrapper.class);
-                        if (day != null && day.roster != null) allItems.addAll(day.roster);
+                        if (day != null && day.roster != null) {
+                            for (RosterItem item : day.roster) {
+                                if (item.getLocalDate() == null) {
+                                    item.setLocalDate(day.date);
+                                }
+                                if (employeeKey != null) {
+                                    item.setEmployeeKey(employeeKey);
+                                }
+                                if (branchId != null) {
+                                    item.setBranchId(branchId);
+                                }
+                            }
+                            allItems.addAll(day.roster);
+                        }
                     }
                     callback.onSuccess(allItems);
                 } else {
@@ -387,6 +409,8 @@ public class RetrofitNetworkHandler {
     }
 
     private static class DayWrapper {
+        @SerializedName("date")
+        LocalDate date;
         @Nullable
         List<RosterItem> roster;
     }

@@ -91,7 +91,7 @@
 
 ## 11. API Planung
 
-- [ ] **Fehlende Endpunkte im PHP Code** Im PHP fehlen
+- [ ] **Fehlende API Endpunkte im PHP Code** Im PHP in der API fehlen:
     - [ ] **Emailadresse** des Administrators als Kontaktadresse für die App
     - [ ] **Grundpläne**
     - [ ] **Notdienste**

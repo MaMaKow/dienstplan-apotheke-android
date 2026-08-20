@@ -1,32 +1,30 @@
 package de.mamakow.dienstplanapotheke.model;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-@Entity(tableName = "roster_table")
+@Entity(tableName = "roster_table", primaryKeys = {"employee_key", "local_date", "duty_start_date_time"})
 public class RosterItem {
-    @PrimaryKey(autoGenerate = true)
-    private int id;
 
-    @ColumnInfo(name = "remote_primary_key")
-    private int remotePrimaryKey;
-
-    @SerializedName("date")
+    @NonNull
+    @SerializedName(value = "date", alternate = {"localDate", "local_date"})
     @ColumnInfo(name = "local_date")
     private LocalDate localDate;
 
-    @SerializedName("employee_key")
+    @NonNull
+    @SerializedName(value = "employeeKey", alternate = {"employee_key", "employee_id", "employeeId"})
     @ColumnInfo(name = "employee_key")
     private int employeeKey;
 
-    @SerializedName("branch_id")
+    @SerializedName(value = "branch_id", alternate = {"branchId", "branch"})
     @ColumnInfo(name = "branch_id")
     private int branchId;
 
@@ -34,23 +32,24 @@ public class RosterItem {
     @ColumnInfo(name = "comment")
     private String comment;
 
-    @SerializedName("duty_start")
+    @NonNull
+    @SerializedName(value = "duty_start", alternate = {"dutyStart", "duty_start_time"})
     @ColumnInfo(name = "duty_start_date_time")
     private LocalDateTime dutyStartDateTime;
 
-    @SerializedName("duty_end")
+    @SerializedName(value = "duty_end", alternate = {"dutyEnd", "duty_end_time"})
     @ColumnInfo(name = "duty_end_date_time")
     private LocalDateTime dutyEndDateTime;
 
-    @SerializedName("break_start")
+    @SerializedName(value = "break_start", alternate = {"breakStart"})
     @ColumnInfo(name = "break_start_date_time")
     private LocalDateTime breakStartDateTime;
 
-    @SerializedName("break_end")
+    @SerializedName(value = "break_end", alternate = {"breakEnd"})
     @ColumnInfo(name = "break_end_date_time")
     private LocalDateTime breakEndDateTime;
 
-    @SerializedName("working_hours")
+    @SerializedName(value = "working_hours", alternate = {"workingHours"})
     @ColumnInfo(name = "working_hours")
     private float workingHours;
 
@@ -114,11 +113,12 @@ public class RosterItem {
         this.breakEndDateTime = breakEndDateTime;
     }
 
+    @NonNull
     public LocalDate getLocalDate() {
         return localDate;
     }
 
-    public void setLocalDate(LocalDate localDate) {
+    public void setLocalDate(@NonNull LocalDate localDate) {
         this.localDate = localDate;
     }
 
@@ -138,20 +138,13 @@ public class RosterItem {
         this.comment = comment;
     }
 
+    @NonNull
     public LocalDateTime getDutyStartDateTime() {
         return dutyStartDateTime;
     }
 
-    public void setDutyStartDateTime(LocalDateTime dutyStartDateTime) {
+    public void setDutyStartDateTime(@NonNull LocalDateTime dutyStartDateTime) {
         this.dutyStartDateTime = dutyStartDateTime;
-    }
-
-    public int getRemotePrimaryKey() {
-        return remotePrimaryKey;
-    }
-
-    public void setRemotePrimaryKey(int remotePrimaryKey) {
-        this.remotePrimaryKey = remotePrimaryKey;
     }
 
     public float getWorkingHours() {
@@ -178,12 +171,23 @@ public class RosterItem {
         this.status = status;
     }
 
-    public int getId() {
-        return id;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RosterItem that = (RosterItem) o;
+        return employeeKey == that.employeeKey &&
+                branchId == that.branchId &&
+                Float.compare(that.workingHours, workingHours) == 0 &&
+                Objects.equals(localDate, that.localDate) &&
+                Objects.equals(dutyStartDateTime, that.dutyStartDateTime) &&
+                Objects.equals(dutyEndDateTime, that.dutyEndDateTime) &&
+                status == that.status;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    @Override
+    public int hashCode() {
+        return Objects.hash(localDate, employeeKey, dutyStartDateTime);
     }
 
     public enum Status {

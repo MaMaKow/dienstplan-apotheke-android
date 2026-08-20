@@ -12,15 +12,15 @@ import java.time.LocalDate;
 public class Employee {
 
     @PrimaryKey
-    @SerializedName("id")
+    @SerializedName(value = "id", alternate = {"employee_key", "employeeKey", "primary_key", "employee_id", "pk"})
     @ColumnInfo(name = "employee_key")
     private int employeeKey;
 
-    @SerializedName("last_name")
+    @SerializedName(value = "last_name", alternate = {"lastName", "employee_last_name"})
     @ColumnInfo(name = "employee_last_name")
     private String employeeLastName;
 
-    @SerializedName("first_name")
+    @SerializedName(value = "first_name", alternate = {"firstName", "employee_first_name"})
     @ColumnInfo(name = "employee_first_name")
     private String employeeFirstName;
 
@@ -28,11 +28,11 @@ public class Employee {
     @ColumnInfo(name = "employee_profession")
     private String employeeProfession;
 
-    @SerializedName("working_hours")
+    @SerializedName(value = "working_hours", alternate = {"workingHours", "employee_working_hours"})
     @ColumnInfo(name = "employee_working_hours")
     private float employeeWorkingHours;
 
-    @SerializedName("lunch_break_minutes")
+    @SerializedName(value = "lunch_break_minutes", alternate = {"lunchBreakMinutes", "employee_lunch_break_minutes"})
     @ColumnInfo(name = "employee_lunch_break_minutes")
     private int employeeLunchBreakMinutes;
 
@@ -48,15 +48,15 @@ public class Employee {
     @ColumnInfo(name = "employee_abilities_compounding")
     private boolean employeeAbilitiesCompounding;
 
-    @SerializedName("branch")
+    @SerializedName(value = "branch_id", alternate = {"branchId", "employee_branch_id"})
     @ColumnInfo(name = "employee_branch_id")
-    private Integer employeeBranchId; // Integer für null-Werte
+    private Integer employeeBranchId;
 
-    @SerializedName("start_of_employment")
+    @SerializedName(value = "start_of_employment", alternate = {"startOfEmployment", "employee_start_of_employment"})
     @ColumnInfo(name = "employee_start_of_employment")
     private LocalDate employeeStartOfEmployment;
 
-    @SerializedName("end_of_employment")
+    @SerializedName(value = "end_of_employment", alternate = {"endOfEmployment", "employee_end_of_employment"})
     @ColumnInfo(name = "employee_end_of_employment")
     private LocalDate employeeEndOfEmployment;
 
@@ -168,5 +168,4 @@ public class Employee {
     public void setEmployeeLunchBreakMinutes(int employeeLunchBreakMinutes) {
         this.employeeLunchBreakMinutes = employeeLunchBreakMinutes;
     }
-
 }

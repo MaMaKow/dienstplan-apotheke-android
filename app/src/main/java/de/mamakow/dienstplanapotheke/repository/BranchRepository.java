@@ -44,7 +44,8 @@ public class BranchRepository {
             @Override
             public void onSuccess(@NonNull List<Branch> branches) {
                 executor.execute(() -> {
-                    branchDao.clearBranches();
+                    // Smart Sync for Branches: Use REPLACE. 
+                    // Removal of clearBranches() to prevent UI flickering and maintain offline data.
                     branchDao.insertBranches(branches);
                     if (callback != null) callback.onSuccess(null);
                 });
