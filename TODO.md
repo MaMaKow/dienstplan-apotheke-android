@@ -47,20 +47,20 @@
 
 - [x] **RosterDatabaseTest**: DAO-Logik für Dienstpläne (CRUD & Filter).
 - [x] **ConvertersTest**: Unit-Tests für `Converters` (Mapping von LocalDate/LocalDateTime).
-- [ ] **RosterTest (Erweiterung)**: Logik für Arbeitszeitberechnungen (Pause vs. Netto-Arbeitszeit).
+- [x] **RosterTest (Erweiterung)**: Logik für Arbeitszeitberechnungen (Pause vs. Netto-Arbeitszeit).
 
 ### Prio 2: Datenbank & Business Logik
 
-- [ ] **EmployeeDatabaseTest**: DAO-Logik für Mitarbeiterverwaltung.
-- [ ] **AbsenceDatabaseTest**: DAO-Logik für Abwesenheiten/Urlaub.
-- [ ] **BranchDatabaseTest**: DAO-Logik für Filialverwaltung.
-- [ ] **RosterRepositoryTest**: Synchronisation zwischen Netzwerk (Retrofit) und Datenbank (Room).
+- [x] **EmployeeDatabaseTest**: DAO-Logik für Mitarbeiterverwaltung.
+- [x] **AbsenceDatabaseTest**: DAO-Logik für Abwesenheiten/Urlaub.
+- [x] **BranchDatabaseTest**: DAO-Logik für Filialverwaltung.
+- [x] **RosterRepositoryTest**: Synchronisation zwischen Netzwerk (Retrofit) und Datenbank (Room).
 
 ### Prio 3: UI-Logik & Stabilität
 
-- [ ] **RosterViewModelTest**: Validierung der Datenaufbereitung für die View.
-- [ ] **EmployeeViewModelTest**: Validierung der Mitarbeiter-Filterlogik.
-- [ ] **MainActivityTest (Espresso)**: Grundlegende UI-Flows (Navigation, Listenanzeige).
+- [x] **RosterViewModelTest**: Validierung der Datenaufbereitung für die View.
+- [x] **EmployeeViewModelTest**: Validierung der Mitarbeiter-Filterlogik.
+- [x] **MainActivityTest (Espresso)**: Grundlegende UI-Flows (Navigation, Listenanzeige).
 
 ## 9. App-Einstellungen & Konfiguration
 
@@ -86,7 +86,7 @@
 
 ## 10. Fehlerbehebungen
 
-- [ ] **Mein Plan** Beim initialen Laden werden Dienstplandaten ab Jahresanfang angezeigt.
+- [x] **Mein Plan** Beim initialen Laden werden Dienstplandaten ab Jahresanfang angezeigt.
   Der Filter für die aktuelle Woche funktioniert offensichtlich nicht.
 
 ## 11. API Planung
@@ -96,4 +96,4 @@
     - [ ] **Grundpläne**
     - [ ] **Notdienste**
     - [ ] **Passwort-Reset**
-    - [ ] **Personalverwaltung** um selbstständig die eigene Haupt-Filiale zu wählen 
+    - [ ] **Personalverwaltung** um selbstständig die eigene Haupt-Filiale zu wählen

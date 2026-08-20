@@ -45,10 +45,10 @@ public class MainViewModel extends AndroidViewModel {
     private final MutableLiveData<Branch> selectedBranch = new MutableLiveData<>();
     private final MutableLiveData<Employee> selectedEmployee = new MutableLiveData<>();
 
-    private final LiveData<Roster> employeeRoster;
-    private final LiveData<Roster> branchRoster;
-    private final LiveData<List<Absence>> absences;
-    private final LiveData<List<Overtime>> overtimes;
+    private LiveData<Roster> employeeRoster;
+    private LiveData<Roster> branchRoster;
+    private LiveData<List<Absence>> absences;
+    private LiveData<List<Overtime>> overtimes;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -56,12 +56,36 @@ public class MainViewModel extends AndroidViewModel {
         RetrofitNetworkHandler networkHandler = new RetrofitNetworkHandler(application);
         SessionManager sessionManager = new SessionManager(application);
 
-        rosterRepository = new RosterRepository(networkHandler, db.rosterDao(), sessionManager);
-        employeeRepository = new EmployeeRepository(db.employeeDao(), networkHandler, sessionManager);
-        branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
-        absenceRepository = new AbsenceRepository(db.absenceDao(), networkHandler, sessionManager);
-        overtimeRepository = new OvertimeRepository(db.overtimeDao(), networkHandler, sessionManager);
+        this.rosterRepository = new RosterRepository(networkHandler, db.rosterDao(), sessionManager);
+        this.employeeRepository = new EmployeeRepository(db.employeeDao(), networkHandler, sessionManager);
+        this.branchRepository = new BranchRepository(db.branchDao(), networkHandler, sessionManager);
+        this.absenceRepository = new AbsenceRepository(db.absenceDao(), networkHandler, sessionManager);
+        this.overtimeRepository = new OvertimeRepository(db.overtimeDao(), networkHandler, sessionManager);
 
+        setupReactiveStreams(sessionManager);
+    }
+
+    /**
+     * Constructor for Dependency Injection (primarily for testing).
+     */
+    public MainViewModel(@NonNull Application application,
+                         @NonNull RosterRepository rosterRepository,
+                         @NonNull EmployeeRepository employeeRepository,
+                         @NonNull BranchRepository branchRepository,
+                         @NonNull AbsenceRepository absenceRepository,
+                         @NonNull OvertimeRepository overtimeRepository,
+                         @NonNull SessionManager sessionManager) {
+        super(application);
+        this.rosterRepository = rosterRepository;
+        this.employeeRepository = employeeRepository;
+        this.branchRepository = branchRepository;
+        this.absenceRepository = absenceRepository;
+        this.overtimeRepository = overtimeRepository;
+
+        setupReactiveStreams(sessionManager);
+    }
+
+    private void setupReactiveStreams(SessionManager sessionManager) {
         int employeeKey = sessionManager.getUserEmployeeKey();
         if (employeeKey != -1) {
             Employee e = new Employee();
@@ -81,7 +105,7 @@ public class MainViewModel extends AndroidViewModel {
             LocalDate start = filter.first != null ? filter.first.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) : LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             LocalDate end = start.plusDays(6);
 
-            // Trigger background sync if needed (handled by Repository Policy)
+            // Trigger background sync if needed
             rosterRepository.fetchAndSaveRosterData(start.toString(), end.toString(), filter.second.getEmployeeKey(), null, false, null);
 
             return rosterRepository.getRosterData(start, end, filter.second.getEmployeeKey(), null);
